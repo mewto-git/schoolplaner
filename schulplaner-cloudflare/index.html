@@ -56,7 +56,8 @@
     --bg-tint:   rgba(0, 122, 255, 0.05);
     --surface:   #FFFFFF;   /* deckende Variante, z. B. für Verläufe */
     --surface2:  #F2F2F7;   /* eingebettete Zeilen */
-    --elevated:  rgba(255, 255, 255, 0.72);  /* Kopfzeile / Menüs */
+    --elevated:  rgba(255, 255, 255, 0.72);  /* Kopfzeile */
+    --popover:   rgba(255, 255, 255, 0.97);  /* Listen und Menüs über Inhalt */
 
     /* --- Glas --- */
     --glass:        rgba(255, 255, 255, 0.58);   /* Karten */
@@ -130,6 +131,7 @@
     --surface:  #1C1C1E;
     --surface2: #2C2C2E;
     --elevated: rgba(28, 28, 30, 0.68);
+    --popover:  rgba(38, 38, 42, 0.97);
 
     --glass:        rgba(38, 38, 42, 0.58);
     --glass-2:      rgba(255, 255, 255, 0.07);
@@ -633,7 +635,7 @@
   .dropdown {
     position: absolute;
     top: calc(100% + 6px); left: 0; right: 0;
-    background: var(--elevated);
+    background: var(--popover);
     -webkit-backdrop-filter: var(--glass-blur);
     backdrop-filter: var(--glass-blur);
     border: 0.5px solid var(--glass-line);
@@ -709,7 +711,7 @@
   .account-menu {
     position: absolute; right: 0; top: calc(100% + 8px);
     min-width: 190px; padding: 6px;
-    background: var(--elevated);
+    background: var(--popover);
     -webkit-backdrop-filter: var(--glass-blur);
     backdrop-filter: var(--glass-blur);
     border: 0.5px solid var(--glass-line);
@@ -745,7 +747,7 @@
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     padding: 24px 22px 20px;
-    background: var(--elevated);
+    background: var(--popover);
     -webkit-backdrop-filter: var(--glass-blur);
     backdrop-filter: var(--glass-blur);
     border: 0.5px solid var(--glass-line);
@@ -996,7 +998,7 @@
   .cls-color-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
   .color-pop {
     position: absolute; z-index: 120; width: 218px; padding: 12px;
-    background: var(--elevated);
+    background: var(--popover);
     -webkit-backdrop-filter: var(--glass-blur);
     backdrop-filter: var(--glass-blur);
     border: 0.5px solid var(--glass-line); border-radius: 14px;
@@ -1367,7 +1369,8 @@
      =================================================================== */
   @media (prefers-reduced-transparency: reduce) {
     body, :root[data-theme="dark"] body { background: var(--bg); }
-    header, .modal, .dropdown, .account-menu, .color-pop { background: var(--surface); }
+    header { background: var(--surface); }
+    .modal, .dropdown, .account-menu, .color-pop { background: var(--surface); }
     .card, .stat, .install-hint { background: var(--surface); }
     .item, .tl-body, .abs-kpi, .goal-box, .chg, input, select, textarea,
     .icon-btn, .account-btn, .account-chip, button.ghost { background: var(--surface2); }
@@ -1380,12 +1383,14 @@
       --glass-2: rgba(255, 255, 255, 0.80);
       --glass-3: rgba(120, 120, 128, 0.14);
       --elevated: #FFFFFF;
+      --popover: #FFFFFF;
     }
     :root[data-theme="dark"] {
       --glass:   rgba(32, 32, 34, 0.96);
       --glass-2: rgba(255, 255, 255, 0.10);
       --glass-3: rgba(120, 120, 128, 0.26);
       --elevated: #1C1C1E;
+      --popover: #1C1C1E;
     }
   }
 </style>
@@ -1816,13 +1821,18 @@
       <div class="form-row">
         <div class="search-field" style="flex:1; position:relative; min-width:240px">
           <svg class="ic field-ic"><use href="#ic-search"/></svg>
-          <input id="un-search" type="text" placeholder="Schule suchen (Name oder Stadt)…" autocomplete="off" style="width:100%" oninput="schoolSearchInput()">
+          <input id="un-search" type="text" placeholder="Schule suchen — Name, Stadt oder WebUntis-Link" autocomplete="off" style="width:100%" oninput="schoolSearchInput()">
           <div id="un-results" class="dropdown" style="display:none"></div>
         </div>
       </div>
+      <div class="hint" style="margin-top:8px">
+        Tipp: Du kannst hier auch einfach den <strong>Link deiner WebUntis-Seite</strong> einfügen
+        (etwa <code>https://neilo.webuntis.com/WebUntis/?school=brg-linz</code>) — Server und
+        Schulname werden dann daraus gelesen, ganz ohne Suche.
+      </div>
       <div class="form-row" style="margin-top:10px">
-        <input id="un-server" type="text" placeholder="webuntis.com-Link (wird automatisch ausgefüllt)" style="flex:1; min-width:200px">
-        <input id="un-school" type="text" placeholder="Schul-Anmeldename (wird automatisch ausgefüllt)" style="flex:1; min-width:200px">
+        <input id="un-server" type="text" placeholder="Server, z. B. neilo.webuntis.com" onchange="normalizeServerField()" style="flex:1; min-width:200px">
+        <input id="un-school" type="text" placeholder="Schul-Anmeldename, z. B. brg-linz" style="flex:1; min-width:200px">
       </div>
       <div class="form-row" style="margin-top:10px">
         <input id="un-user" type="text" placeholder="Benutzername" autocomplete="off" style="flex:1; min-width:140px">
@@ -2820,47 +2830,134 @@ const PALETTE = ["#6c8bff", "#4cd48a", "#ffb454", "#ff6b7a", "#c792ea", "#4dd0e1
 
 let schoolTimer = null;
 let schoolResults = [];
+let schoolSeq = 0;          // damit eine langsame ältere Suche keine neuere überschreibt
+let parsedLink = null;
+
+/* Aus einem WebUntis-Link Server und Schul-Anmeldenamen herauslesen.
+   Das braucht keinen Suchdienst und funktioniert deshalb immer. Übliche
+   Formen:
+     https://neilo.webuntis.com/WebUntis/?school=brg-linz#/basic/login
+     https://mese.webuntis.com/WebUntis/index.do?school=BG%20Beispiel
+     neilo.webuntis.com/WebUntis/?school=brg-linz                        */
+function parseUntisLink(text) {
+  const raw = String(text || "").trim();
+  if (!/webuntis\.com/i.test(raw)) return null;
+  let url;
+  try { url = new URL(/^https?:\/\//i.test(raw) ? raw : "https://" + raw); } catch (e) { return null; }
+  const host = url.hostname.toLowerCase();
+  if (host !== "webuntis.com" && !host.endsWith(".webuntis.com")) return null;
+  let school = url.searchParams.get("school") || "";
+  if (!school) {
+    // Bei den neueren Adressen steht der Schulname hinter dem #
+    const m = raw.match(/[?&]school=([^&#\s]+)/);
+    if (m) { try { school = decodeURIComponent(m[1]); } catch (e) { school = m[1]; } }
+  }
+  return { server: host, school: school.trim() };
+}
+
+function showLinkOption(link) {
+  parsedLink = link;
+  const box = document.getElementById("un-results");
+  box.innerHTML = `
+    <div class="opt" onclick="pickParsedLink()">
+      <div class="t">Aus dem Link übernehmen</div>
+      <div class="s">${esc(link.server)}${link.school
+        ? " · Schule: " + esc(link.school)
+        : " · Schul-Anmeldename fehlt im Link — den trägst du gleich selbst ein"}</div>
+    </div>`;
+  box.style.display = "block";
+}
+function pickParsedLink() {
+  if (!parsedLink) return;
+  document.getElementById("un-server").value = parsedLink.server;
+  if (parsedLink.school) document.getElementById("un-school").value = parsedLink.school;
+  document.getElementById("un-results").style.display = "none";
+  untisStatus(parsedLink.school
+    ? `Aus dem Link übernommen: ${parsedLink.school} auf ${parsedLink.server}. Jetzt Benutzername und Passwort eingeben.`
+    : `Server ${parsedLink.server} übernommen. Trag noch den Schul-Anmeldenamen ein — er steht in der WebUntis-Adresse hinter „school=".`);
+  const next = document.getElementById(parsedLink.school ? "un-user" : "un-school");
+  if (next) next.focus();
+}
+
 function schoolSearchInput() {
   clearTimeout(schoolTimer);
   const q = document.getElementById("un-search").value.trim();
   const box = document.getElementById("un-results");
+
+  // Ein eingefügter Link wird sofort ausgewertet — ohne Netz, ohne Warten.
+  const link = parseUntisLink(q);
+  if (link) { showLinkOption(link); return; }
+  parsedLink = null;
+
   if (q.length < 3) { box.style.display = "none"; return; }
   schoolTimer = setTimeout(() => searchSchools(q), 350);
 }
+
 async function searchSchools(q) {
   const box = document.getElementById("un-results");
+  const seq = ++schoolSeq;
   box.innerHTML = `<div class="msg">Suche…</div>`;
   box.style.display = "block";
+
+  let res;
   try {
-    const res = await fetch(API_BASE + "/api/untis/schools", {
+    res = await fetch(API_BASE + "/api/untis/schools", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ query: q })
     });
-    const out = await res.json();
-    if (!out.ok) { box.innerHTML = `<div class="msg">${esc(out.error)}</div>`; return; }
-    if (!out.schools.length) {
-      box.innerHTML = `<div class="msg">Keine Schulen gefunden für „${esc(q)}“.</div>`;
-      return;
-    }
-    schoolResults = out.schools;
-    box.innerHTML = out.schools.map((s, i) => `
-      <div class="opt" onclick="pickSchool(${i})">
-        <div class="t">${esc(s.name)}</div>
-        <div class="s">${esc(s.address)}</div>
-      </div>`).join("");
   } catch (e) {
-    box.innerHTML = `<div class="msg">Die Schulsuche ist gerade nicht erreichbar — prüfe deine Internetverbindung.</div>`;
+    if (seq !== schoolSeq) return;
+    box.innerHTML = `<div class="msg">${navigator.onLine === false
+      ? "Keine Internetverbindung."
+      : "Der Sync-Dienst ist nicht erreichbar."} Du kannst stattdessen den Link deiner WebUntis-Seite hier einfügen.</div>`;
+    return;
   }
+  if (seq !== schoolSeq) return;
+
+  let out = null;
+  try { out = await res.json(); } catch (e) { /* unten behandelt */ }
+
+  if (!out) {
+    box.innerHTML = `<div class="msg">Die Schulsuche antwortet nicht wie erwartet (HTTP ${res.status}).
+      Läuft die Seite schon auf Cloudflare Pages — mit dem Ordner <code>functions/</code>?
+      Du kannst so lange den WebUntis-Link hier einfügen.</div>`;
+    return;
+  }
+  if (!out.ok) { box.innerHTML = `<div class="msg">${esc(out.error)}</div>`; return; }
+  if (!out.schools.length) {
+    box.innerHTML = `<div class="msg">Keine Schulen gefunden für „${esc(q)}“. Probier den Ort dazu — oder füg den WebUntis-Link ein.</div>`;
+    return;
+  }
+  schoolResults = out.schools;
+  box.innerHTML = out.schools.map((s, i) => `
+    <div class="opt" onclick="pickSchool(${i})">
+      <div class="t">${esc(s.name)}</div>
+      <div class="s">${esc([s.address, s.server].filter(Boolean).join(" · "))}</div>
+    </div>`).join("");
 }
+
 function pickSchool(i) {
   const s = schoolResults[i];
   if (!s) return;
-  document.getElementById("un-server").value = "https://" + s.server;
+  document.getElementById("un-server").value = s.server;
   document.getElementById("un-school").value = s.school;
   document.getElementById("un-search").value = s.name;
   document.getElementById("un-results").style.display = "none";
   untisStatus(`Schule ausgewählt: ${s.name} — gib jetzt Benutzername & Passwort ein und klicke „Jetzt synchronisieren“.`);
+  const user = document.getElementById("un-user");
+  if (user) user.focus();
+}
+
+/* Wer eine ganze Adresse ins Serverfeld kopiert, soll nicht scheitern. */
+function normalizeServerField() {
+  const el = document.getElementById("un-server");
+  if (!el) return;
+  const link = parseUntisLink(el.value);
+  if (!link) return;
+  el.value = link.server;
+  const school = document.getElementById("un-school");
+  if (link.school && school && !school.value.trim()) school.value = link.school;
 }
 document.addEventListener("click", e => {
   if (!e.target.closest("#un-search")) {

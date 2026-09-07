@@ -17,8 +17,33 @@
  */
 
 const MAX_BODY = 100000;
+const UPSTREAM_TIMEOUT_MS = 12000;
+
+/* Die WebUntis-Schulsuche liegt je nach Region auf einem dieser Dienste.
+   Beide sprechen dasselbe JSON-RPC; der erste, der antwortet, gewinnt. */
+const SCHOOL_SEARCH_ENDPOINTS = [
+  "https://schoolsearch.webuntis.com/schoolquery2",
+  "https://mobile.webuntis.com/ms/schoolquery2",
+];
 
 class UntisError extends Error {}
+
+/* Holt eine Adresse und gibt IMMER etwas Auswertbares zurück: Statuscode,
+   geparstes JSON (oder null) und den Textanfang. So wird aus einer
+   HTML-Fehlerseite eine verständliche Meldung statt eines Absturzes. */
+async function fetchJson(url, options) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), UPSTREAM_TIMEOUT_MS);
+  try {
+    const resp = await fetch(url, Object.assign({}, options, { signal: ctrl.signal }));
+    const text = await resp.text();
+    let data = null;
+    try { data = JSON.parse(text); } catch (e) { /* kein JSON — unten gemeldet */ }
+    return { ok: resp.ok, status: resp.status, data, snippet: text.slice(0, 120) };
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 function json(obj, status = 200) {
   return new Response(JSON.stringify(obj), {
@@ -59,21 +84,22 @@ async function rpc(server, school, method, params, session) {
   const url = `https://${server}/WebUntis/jsonrpc.do?school=${encodeURIComponent(school)}`;
   const headers = { "Content-Type": "application/json", "User-Agent": "school-planner/1.0" };
   if (session) headers["Cookie"] = "JSESSIONID=" + session;
-  let resp;
+  let r;
   try {
-    resp = await fetch(url, {
+    r = await fetchJson(url, {
       method: "POST",
       headers,
       body: JSON.stringify({ id: "school-planner", method, params: params || {}, jsonrpc: "2.0" }),
     });
   } catch (e) {
-    throw new UntisError(`Konnte ${server} nicht erreichen. Prüfe Serveradresse und Internetverbindung.`);
+    throw new UntisError(e && e.name === "AbortError"
+      ? `${server} hat nicht innerhalb von 12 Sekunden geantwortet. Versuch es gleich noch einmal.`
+      : `Konnte ${server} nicht erreichen. Prüfe Serveradresse und Internetverbindung.`);
   }
-  let out;
-  try { out = await resp.json(); }
-  catch (e) {
+  const out = r.data;
+  if (!out) {
     throw new UntisError(`Die Serveradresse „${server}" antwortet nicht wie ein WebUntis-Server ` +
-      `(HTTP ${resp.status}). Sie sollte wie „xyz.webuntis.com" aussehen.`);
+      `(HTTP ${r.status}). Sie sollte wie „xyz.webuntis.com" aussehen.`);
   }
   if (out.error) {
     const friendly = {
@@ -88,31 +114,60 @@ async function rpc(server, school, method, params, session) {
   return out.result;
 }
 
-async function schoolSearch(query) {
-  query = (query || "").trim();
-  if (query.length < 3) return [];
-  let resp;
-  try {
-    resp = await fetch("https://schoolsearch.webuntis.com/schoolquery2", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "User-Agent": "school-planner/1.0" },
-      body: JSON.stringify({ id: "school-planner", method: "searchSchool", params: [{ search: query }], jsonrpc: "2.0" }),
-    });
-  } catch (e) {
-    throw new UntisError("Konnte die WebUntis-Schulsuche nicht erreichen. Prüfe deine Internetverbindung.");
-  }
-  const out = await resp.json();
-  if (out.error) {
-    if (out.error.code === -6003) throw new UntisError("Zu viele Treffer — tippe mehr vom Schulnamen oder die Stadt dazu.");
-    throw new UntisError("Fehler bei der Schulsuche: " + out.error.message);
-  }
-  const schools = (out.result && out.result.schools) || [];
-  return schools.slice(0, 15).map((s) => ({
+function mapSchool(s) {
+  return {
     name: s.displayName || s.loginName || "",
     address: s.address || "",
     school: s.loginName || "",
-    server: s.server || "",
-  }));
+    server: String(s.server || "").replace(/^https?:\/\//, "").split("/")[0],
+  };
+}
+
+async function schoolSearch(query) {
+  query = (query || "").trim();
+  if (query.length < 3) return [];
+  const body = JSON.stringify({
+    id: "school-planner",
+    method: "searchSchool",
+    params: [{ search: query }],
+    jsonrpc: "2.0",
+  });
+  const headers = {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+    "User-Agent": "school-planner/1.0",
+  };
+
+  const problems = [];
+  for (const url of SCHOOL_SEARCH_ENDPOINTS) {
+    const host = url.split("/")[2];
+    let r;
+    try {
+      r = await fetchJson(url, { method: "POST", headers, body });
+    } catch (e) {
+      problems.push(`${host}: ${e && e.name === "AbortError" ? "keine Antwort in 12 s" : "nicht erreichbar"}`);
+      continue;
+    }
+    if (!r.data) {
+      problems.push(`${host}: HTTP ${r.status}, keine JSON-Antwort`);
+      continue;
+    }
+    if (r.data.error) {
+      // Zu viele Treffer ist eine Antwort, kein Ausfall — nicht weiterprobieren.
+      if (r.data.error.code === -6003) {
+        throw new UntisError("Zu viele Treffer — tippe mehr vom Schulnamen oder die Stadt dazu.");
+      }
+      problems.push(`${host}: ${r.data.error.message} (Code ${r.data.error.code})`);
+      continue;
+    }
+    const schools = (r.data.result && r.data.result.schools) || [];
+    return schools.slice(0, 15).map(mapSchool);
+  }
+
+  throw new UntisError(
+    "Die WebUntis-Schulsuche antwortet gerade nicht (" + problems.join("; ") + "). " +
+    "Du kannst deine Schule unten auch von Hand eintragen — dafür genügt der Link deiner WebUntis-Seite."
+  );
 }
 
 /* ---------- parsing helpers ---------- */

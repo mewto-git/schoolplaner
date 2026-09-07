@@ -28,6 +28,7 @@ functions/api/untis/[[path]].js    ← die WebUntis-Sync (läuft bei Cloudflare)
 ```
 > Wichtig: `functions/` MUSS mit hochgeladen werden — daraus macht Cloudflare
 > automatisch die Endpunkte `/api/untis/sync` und `/api/untis/schools`.
+> Fehlt der Ordner, meldet die Schulsuche „HTTP 404" statt Ergebnissen.
 
 ## In wenigen Schritten live
 ### Variante A — direkt hochladen (am schnellsten)
@@ -83,10 +84,28 @@ Dazu kommen zwei Dinge, die ohne WebUntis funktionieren:
   Semesterwechsel ist einstellbar (Standard 1. Februar), das Schuljahr läuft
   vom 1. September bis 31. August.
 
+## Schulsuche
+Die Suche läuft über die Function, nicht über den Browser — WebUntis erlaubt
+keine direkten Anfragen von fremden Seiten. Sie fragt nacheinander
+
+1. `schoolsearch.webuntis.com/schoolquery2`
+2. `mobile.webuntis.com/ms/schoolquery2`
+
+und nimmt den ersten Dienst, der antwortet; jede Anfrage bricht nach 12 s ab.
+Antwortet keiner, nennt die Fehlermeldung beide Dienste samt Statuscode, statt
+nur „Serverfehler" zu sagen.
+
+**Es geht auch ohne Suche:** In dasselbe Feld kannst du den Link deiner
+WebUntis-Seite einfügen, etwa
+`https://neilo.webuntis.com/WebUntis/?school=brg-linz#/basic/login`.
+Server und Schul-Anmeldename werden daraus gelesen — ohne Netzaufruf. Beide
+Felder lassen sich auch direkt ausfüllen; der Anmeldename steht in der
+WebUntis-Adresse hinter `school=`.
+
 ## Test
 1. `https://…pages.dev/` öffnen → Reiter **Stundenplan**.
-2. Schule suchen, Benutzername/Passwort, **Datenschutz-Häkchen**,
-   **Jetzt synchronisieren**.
+2. Schule suchen (oder WebUntis-Link einfügen), Benutzername/Passwort,
+   **Datenschutz-Häkchen**, **Jetzt synchronisieren**.
 3. Es sollten kommen: **Fächer**, **Stundenplan** (mit Uhrzeiten, rot = entfällt,
    orange = Vertretung), **Prüfungen**, **Fehlstunden** und — falls freigegeben —
    **Hausübungen**.
