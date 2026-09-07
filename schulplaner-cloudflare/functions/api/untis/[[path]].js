@@ -205,6 +205,68 @@ async function getHomework(server, school, session, start, end) {
     return parseHomework(await resp.json());
   } catch (e) { return []; }
 }
+/* Fehlzeiten. WebUntis gibt sie je nach Schule über die offizielle
+   JSON-RPC-Methode oder nur über denselben Weg heraus, den die WebUntis-
+   Website selbst benutzt. Beides wird versucht; klappt keins, bleibt die
+   Liste leer und die App zeigt den Abschnitt einfach nicht an. */
+function ymdOrNull(v) {
+  try { return fmtISO(ymdToDate(v)); } catch (e) { return null; }
+}
+function minutesBetween(a, b) {
+  const s = parseInt(a, 10), e = parseInt(b, 10);
+  if (!Number.isFinite(s) || !Number.isFinite(e)) return 0;
+  const m = (Math.floor(e / 100) * 60 + (e % 100)) - (Math.floor(s / 100) * 60 + (s % 100));
+  return m > 0 && m < 24 * 60 ? m : 0;
+}
+function normAbsence(a) {
+  const date = ymdOrNull(a.startDate || a.date);
+  if (!date) return null;
+  let subject = a.subject != null ? a.subject : (a.su || "");
+  subject = nameOf(subject);
+  const excused =
+    typeof a.isExcused === "boolean" ? a.isExcused :
+    a.excuseStatus ? true :
+    (a.excuse && (a.excuse.excuseStatus || a.excuse.excuseDate)) ? true : false;
+  return {
+    id: a.id != null ? a.id : null,
+    date,
+    endDate: ymdOrNull(a.endDate) || date,
+    start: a.startTime != null ? fmtHM(a.startTime) : "",
+    end: a.endTime != null ? fmtHM(a.endTime) : "",
+    minutes: minutesBetween(a.startTime, a.endTime),
+    subject,
+    reason: String(a.absenceReason || a.reason || a.text || "").trim(),
+    excused: !!excused,
+  };
+}
+async function getAbsences(server, school, session, personId, start, end) {
+  // 1) offizielle JSON-RPC-Methode
+  try {
+    const raw = await rpc(server, school, "getStudentAbsences",
+      { startDate: dateToYmd(start), endDate: dateToYmd(end),
+        includeExcused: true, includeUnExcused: true }, session);
+    const list = (Array.isArray(raw) ? raw : (raw && raw.absences) || [])
+      .map(normAbsence).filter(Boolean);
+    if (list.length) return list;
+  } catch (e) { /* viele Schulen sperren die Methode — weiter unten probieren */ }
+
+  // 2) derselbe Weg wie in der WebUntis-Website
+  try {
+    const url = `https://${server}/WebUntis/api/classreg/absences/students` +
+      `?startDate=${dateToYmd(start)}&endDate=${dateToYmd(end)}` +
+      `&studentId=${encodeURIComponent(personId)}&excuseStatusId=-1&includeTodaysAbsence=true`;
+    const resp = await fetch(url, {
+      headers: { "Accept": "application/json", "User-Agent": "school-planner/1.0",
+                 "Cookie": `JSESSIONID=${session}; schoolname=_${b64utf8(school)}` },
+    });
+    if (!resp.ok) return [];
+    const out = await resp.json();
+    const data = (out && out.data) || out || {};
+    const raw = data.absences || data.records || [];
+    return raw.map(normAbsence).filter(Boolean);
+  } catch (e) { return []; }
+}
+
 async function getSchoolyears(server, school, session) {
   try { const y = await rpc(server, school, "getSchoolyears", {}, session); if (y && y.length) return y; } catch (e) {}
   try { const c = await rpc(server, school, "getCurrentSchoolyear", {}, session); if (c) return [c]; } catch (e) {}
@@ -233,13 +295,20 @@ async function untisSync(body) {
       "(personId fehlt). Nutze bitte ein Schüler-Konto.");
   }
 
-  let subjects = [], grid = [], timetable = [], exams = [], homework = [], note = null, yearEnd = null;
+  let subjects = [], grid = [], timetable = [], exams = [], homework = [], absences = [];
+  let note = null, yearEnd = null, yearStart = null;
   let [monday, friday] = weekRange();
   try {
     subjects = (await rpc(server, school, "getSubjects", {}, session)) || [];
     try { grid = (await rpc(server, school, "getTimegridUnits", {}, session)) || []; } catch (e) { grid = []; }
     const years = await getSchoolyears(server, school, session);
     [monday, friday, note, yearEnd] = clampToSchoolyear(monday, friday, years);
+    for (const y of years || []) {
+      try {
+        const st = ymdToDate(y.startDate), en = ymdToDate(y.endDate);
+        if (st <= monday && monday <= en) yearStart = st;
+      } catch (e) {}
+    }
     // Two weeks at once: the current week fills the grid, the following week
     // lets the app warn about cancellations/substitutions that are still ahead.
     const ttEnd = yearEnd && addDays(monday, 11) > yearEnd ? yearEnd : addDays(monday, 11);
@@ -248,6 +317,8 @@ async function untisSync(body) {
     const examEnd = yearEnd || addDays(monday, 180);
     exams = await getExams(server, school, session, monday, examEnd);          // → Prüfungen
     homework = await getHomework(server, school, session, monday, addDays(monday, 28)); // → Hausübungen
+    absences = await getAbsences(server, school, session, personId,               // → Fehlstunden
+      yearStart || addDays(monday, -200), addDays(monday, 4));
   } finally {
     try { await rpc(server, school, "logout", {}, session); } catch (e) {}
   }
@@ -326,6 +397,7 @@ async function untisSync(body) {
     lessons,
     exams,
     homework,
+    absences,
     note,
   };
 }

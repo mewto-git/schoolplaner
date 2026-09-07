@@ -4,10 +4,16 @@ Alles läuft auf **Cloudflare Pages**: kostenlos, eine einzige URL, kein zweiter
 Server. Die Website sind statische Dateien; die WebUntis-Synchronisierung läuft
 als **Pages Function** (Ordner `functions/`) unter derselben Adresse.
 
-Das Design folgt den Apple Human Interface Guidelines (SF-Schrift,
-System-Farben, gruppierte Karten, durchscheinende Kopfzeile, Hell/Dunkel
-automatisch nach Systemeinstellung) und lässt sich am iPhone als App auf den
-Home-Bildschirm legen.
+Das Design folgt den Apple Human Interface Guidelines im **Liquid-Glass-Stil**
+(iOS 26): der Inhalt liegt auf einem weichen Farbverlauf, alle Flächen darüber
+sind durchscheinendes Glas mit Lichtsaum. SF-Schrift, System-Farben, Hell/Dunkel
+automatisch nach Systemeinstellung. Wer im System „Transparenz reduzieren"
+aktiviert hat, bekommt automatisch deckende Flächen.
+
+Die App lässt sich am iPhone auf den Home-Bildschirm legen und öffnet mit einem
+**„Heute"-Fokus**: Tagesverlauf mit Zeitachse und Markierung für „jetzt", darüber
+die Planänderungen, darunter nur, was heute und morgen fällig ist. Die Zahlen-
+Kacheln stehen in dem Reiter, zu dem sie gehören.
 
 ## Ordnerinhalt
 ```
@@ -63,13 +69,27 @@ einer Fehlermeldung.
 * **Entfall & Vertretungen** für zwei Wochen — inklusive „was hat sich seit dem
   letzten Sync geändert" (die App markiert das mit **NEU**) und Hinweisen wie
   „Du hast frei bis zur 3. Stunde".
+* **Fehlzeiten** des laufenden Schuljahres, pro Fach aufgeschlüsselt, mit
+  entschuldigt/offen und einer einstellbaren Warngrenze. Die Function versucht
+  zuerst die offizielle JSON-RPC-Methode und danach den Weg, den die
+  WebUntis-Website selbst nimmt; sperrt die Schule beides, bleibt der Bereich leer.
+
+Dazu kommen zwei Dinge, die ohne WebUntis funktionieren:
+
+* **Notenziel** — Zielschnitt pro Fach und die Rechnung, welche Note in der
+  nächsten Prüfung (×1/×2/×3) noch reicht.
+* **Notenverlauf & Semester** — Diagramm des gewichteten Schnitts über die Zeit
+  und ein Umschalter für 1./2. Semester, Schuljahr oder alles. Der
+  Semesterwechsel ist einstellbar (Standard 1. Februar), das Schuljahr läuft
+  vom 1. September bis 31. August.
 
 ## Test
 1. `https://…pages.dev/` öffnen → Reiter **Stundenplan**.
 2. Schule suchen, Benutzername/Passwort, **Datenschutz-Häkchen**,
    **Jetzt synchronisieren**.
 3. Es sollten kommen: **Fächer**, **Stundenplan** (mit Uhrzeiten, rot = entfällt,
-   orange = Vertretung), **Prüfungen** und — falls freigegeben — **Hausübungen**.
+   orange = Vertretung), **Prüfungen**, **Fehlstunden** und — falls freigegeben —
+   **Hausübungen**.
 
 ## Sicherheit
 - Passwörter werden **einmal** benutzt und verworfen — nie gespeichert, nie geloggt.
