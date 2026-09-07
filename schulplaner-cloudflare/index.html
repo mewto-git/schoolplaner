@@ -168,13 +168,25 @@
     background: var(--bg);
     -webkit-text-size-adjust: 100%;
   }
-  :root[data-theme="dark"] body {
+  /* Der Farbverlauf, durch den das Glas hindurchschimmert: eine eigene,
+     am Bildschirm fixierte Ebene. (background-attachment: fixed lässt iOS
+     bei jedem Scroll-Frame neu zeichnen und ruckelt spürbar.) */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(1100px 780px at 8% -12%,  rgba(90, 160, 255, 0.42), transparent 62%),
+      radial-gradient(900px 700px at 102% 4%,   rgba(175, 82, 222, 0.26), transparent 60%),
+      radial-gradient(800px 620px at 50% 108%,  rgba(48, 209, 190, 0.22), transparent 62%);
+  }
+  :root[data-theme="dark"] body::before {
     background:
       radial-gradient(1100px 780px at 8% -12%,  rgba(10, 90, 220, 0.40), transparent 62%),
       radial-gradient(900px 700px at 102% 4%,   rgba(120, 40, 190, 0.32), transparent 60%),
-      radial-gradient(800px 620px at 50% 108%,  rgba(0, 130, 130, 0.24), transparent 62%),
-      var(--bg);
-    background-attachment: fixed;
+      radial-gradient(800px 620px at 50% 108%,  rgba(0, 130, 130, 0.24), transparent 62%);
   }
 
   body {
@@ -183,14 +195,7 @@
     font-size: 15px;
     line-height: 1.45;
     letter-spacing: -0.01em;
-    /* Der Farbverlauf, durch den das Glas hindurchschimmert. Fest am
-       Bildschirm, damit sich beim Scrollen die Brechung ändert. */
-    background:
-      radial-gradient(1100px 780px at 8% -12%,  rgba(90, 160, 255, 0.42), transparent 62%),
-      radial-gradient(900px 700px at 102% 4%,   rgba(175, 82, 222, 0.26), transparent 60%),
-      radial-gradient(800px 620px at 50% 108%,  rgba(48, 209, 190, 0.22), transparent 62%),
-      var(--bg);
-    background-attachment: fixed;
+    background: var(--bg);
     color: var(--text);
     min-height: 100vh;
     min-height: 100dvh;
@@ -247,8 +252,6 @@
     padding: 2px;
     max-width: 100%;
     background: var(--glass-3);
-    -webkit-backdrop-filter: blur(12px) saturate(160%);
-    backdrop-filter: blur(12px) saturate(160%);
     box-shadow: inset 0 0.5px 0 var(--glass-edge), inset 0 0 0 0.5px var(--glass-line);
     border-radius: 10px;
     overflow-x: auto;
@@ -284,6 +287,8 @@
 
   /* ===== Inhalt ===== */
   main {
+    position: relative;
+    z-index: 1;
     max-width: 900px;
     margin: 0 auto;
     padding: 20px 20px calc(28px + env(safe-area-inset-bottom));
@@ -319,8 +324,6 @@
 
   input, select, textarea {
     background: var(--glass-2);
-    -webkit-backdrop-filter: blur(8px);
-    backdrop-filter: blur(8px);
     border: 0.5px solid var(--glass-line);
     box-shadow: inset 0 0.5px 0 var(--glass-edge);
     color: var(--text);
@@ -381,8 +384,6 @@
 
   button.ghost {
     background: var(--glass-2);
-    -webkit-backdrop-filter: blur(10px) saturate(160%);
-    backdrop-filter: blur(10px) saturate(160%);
     border: 0.5px solid var(--glass-line);
     box-shadow: inset 0 0.5px 0 var(--glass-edge);
     color: var(--muted);
@@ -499,7 +500,6 @@
     padding: 4px 11px; border-radius: 999px;
     background: rgba(255, 255, 255, 0.22);
     box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.45);
-    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
   }
   /* Lichtreflex quer über das Glas */
   .widget::before {
@@ -611,6 +611,8 @@
 
   /* ===== Fußzeile ===== */
   footer {
+    position: relative;
+    z-index: 1;
     text-align: center;
     color: var(--muted);
     font-size: 12.5px;
@@ -633,8 +635,6 @@
     display: flex; align-items: center; justify-content: center;
     width: 34px; height: 34px; border-radius: 999px; font-size: 15px;
     background: var(--glass-2);
-    -webkit-backdrop-filter: blur(12px) saturate(160%);
-    backdrop-filter: blur(12px) saturate(160%);
     border: 0.5px solid var(--glass-line);
     box-shadow: inset 0 0.5px 0 var(--glass-edge);
     color: var(--text);
@@ -647,8 +647,6 @@
   .account-btn, .account-chip {
     display: flex; align-items: center; gap: 7px;
     background: var(--glass-2);
-    -webkit-backdrop-filter: blur(12px) saturate(160%);
-    backdrop-filter: blur(12px) saturate(160%);
     border: 0.5px solid var(--glass-line);
     box-shadow: inset 0 0.5px 0 var(--glass-edge);
     color: var(--text);
@@ -1056,22 +1054,48 @@
     -webkit-backdrop-filter: blur(18px) saturate(160%); backdrop-filter: blur(18px) saturate(160%);
   }
 
-  /* ===== Einblenden beim Reiterwechsel =====
-     Nur wenn Animationen erwünscht sind — sonst bleibt der Inhalt einfach
-     sofort sichtbar (nichts darf hinter einer nicht laufenden Animation
-     unsichtbar hängen bleiben). */
+  /* ===== Bewegung =====
+     Alles unter „prefers-reduced-motion: no-preference" — nichts darf hinter
+     einer nicht laufenden Animation unsichtbar hängen bleiben. */
   @media (prefers-reduced-motion: no-preference) {
-    .page.active > * { animation: fadeUp 0.40s var(--spring) both; }
-    .page.active > *:nth-child(1) { animation-delay: 0.02s; }
-    .page.active > *:nth-child(2) { animation-delay: 0.05s; }
-    .page.active > *:nth-child(3) { animation-delay: 0.08s; }
-    .page.active > *:nth-child(4) { animation-delay: 0.11s; }
-    .page.active > *:nth-child(5) { animation-delay: 0.14s; }
+    html { scroll-behavior: smooth; }
+
+    /* Reiterwechsel: die Karten kommen dicht gestaffelt herein. */
+    .page.active > * { animation: fadeUp 0.36s var(--spring) both; }
+    .page.active > *:nth-child(1) { animation-delay: 0.01s; }
+    .page.active > *:nth-child(2) { animation-delay: 0.04s; }
+    .page.active > *:nth-child(3) { animation-delay: 0.07s; }
+    .page.active > *:nth-child(4) { animation-delay: 0.10s; }
+    .page.active > *:nth-child(5) { animation-delay: 0.13s; }
+
+    /* Fenster schließen sich, statt zu verschwinden. */
+    .modal-overlay.closing { animation: overlayOut 0.20s ease both; }
+    .modal-overlay.closing .modal { animation: modalOut 0.20s var(--spring) both; }
+
+    /* Zeilen, die gelöscht oder abgehakt werden, gleiten weg. */
+    .row-out { animation: rowOut 0.24s var(--spring) both; pointer-events: none; }
   }
   @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(10px); }
+    from { opacity: 0; transform: translateY(8px); }
     to   { opacity: 1; transform: translateY(0); }
   }
+  @keyframes overlayOut { to { opacity: 0; } }
+  @keyframes modalOut { to { opacity: 0; transform: translateY(8px) scale(0.98); } }
+  @keyframes rowOut {
+    to { opacity: 0; transform: translateX(26px) scale(0.98); }
+  }
+
+  /* Antippen soll sofort reagieren — kein 300-ms-Warten auf einen Doppeltipp. */
+  button, input, select, textarea, .item, .cal-cell.has, .swatch, .color-dot.editable, .thumbs img {
+    touch-action: manipulation;
+  }
+  .item:active, .chg:active { transform: scale(0.985); }
+  .cal-cell.has:active { transform: scale(0.96); }
+  .segmented button:active, .theme-pill:active, .auth-tabs button:active { transform: scale(0.96); }
+  .cal-cell { transition: background 0.15s ease, transform 0.15s var(--spring), border-color 0.2s ease; }
+  .segmented button, .theme-pill, .auth-tabs button { transition: background 0.2s var(--spring), transform 0.15s var(--spring); }
+  .item .title { transition: color 0.2s ease; }
+  .tl-body { transition: background 0.2s ease, border-color 0.2s ease; }
 
   /* ===================================================================
      TELEFON — iPhone & schmale Bildschirme
@@ -1155,6 +1179,11 @@
     @keyframes sheetIn {
       from { transform: translateY(100%); }
       to   { transform: translateY(0); }
+    }
+    .modal-overlay.closing .modal { animation: sheetOut 0.24s var(--spring) both; }
+    @keyframes sheetOut {
+      from { transform: translateY(0); }
+      to   { transform: translateY(100%); }
     }
     #img-overlay { align-items: center; padding: 16px; }
     #img-overlay .modal::before { display: none; }
@@ -1871,6 +1900,39 @@ function save() {
   }
 }
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+/* ---------- Bewegung ---------- */
+function reducedMotion() {
+  try { return matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) { return false; }
+}
+
+/* Ein Fenster erst wegblenden, dann ausblenden — sonst „springt" es weg. */
+function hideOverlay(id) {
+  const el = document.getElementById(id);
+  if (!el || el.style.display === "none") return;
+  if (reducedMotion()) { el.style.display = "none"; return; }
+  el.classList.add("closing");
+  setTimeout(() => {
+    el.style.display = "none";
+    el.classList.remove("closing");
+  }, 200);
+}
+
+function showOverlay(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.remove("closing");   // eine laufende Schließ-Animation abbrechen
+  el.style.display = "flex";
+}
+
+/* Eine Zeile hinausgleiten lassen und danach erst neu zeichnen. Ohne das
+   springt beim Abhaken oder Löschen die halbe Liste. */
+function withRowOut(rowKey, then) {
+  const rows = document.querySelectorAll(`[data-row="${rowKey}"]`);
+  if (!rows.length || reducedMotion()) { then(); return; }
+  rows.forEach(r => r.classList.add("row-out"));
+  setTimeout(then, 230);
+}
 function esc(s) {
   return String(s ?? "").replace(/[&<>"']/g, c =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -1914,6 +1976,12 @@ document.querySelectorAll("nav button").forEach(btn => {
     document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
     btn.classList.add("active");
     document.getElementById("page-" + btn.dataset.page).classList.add("active");
+    // Der neue Reiter fängt oben an — sonst landet man mitten im Inhalt.
+    if (window.scrollY > 0) {
+      window.scrollTo({ top: 0, behavior: reducedMotion() ? "auto" : "smooth" });
+    }
+    // Der angetippte Reiter soll in der Leiste sichtbar bleiben.
+    try { btn.scrollIntoView({ block: "nearest", inline: "center", behavior: reducedMotion() ? "auto" : "smooth" }); } catch (e) {}
   });
 });
 
@@ -1953,7 +2021,7 @@ function renderClasses() {
     return;
   }
   el.innerHTML = data.classes.map(c => `
-    <div class="item">
+    <div class="item" data-row="cls-${c.id}">
       <div class="color-dot editable" style="background:${c.color}" title="Farbe ändern" onclick="openClassColor('${c.id}', event)"></div>
       <div class="grow">
         <div class="title">${esc(c.name)}</div>
@@ -2067,11 +2135,14 @@ function addHomework() {
 }
 function toggleHomework(id) {
   const hw = data.homework.find(h => h.id === id);
-  if (hw) { hw.done = !hw.done; save(); renderAll(); }
+  if (!hw) return;
+  withRowOut("hw-" + id, () => { hw.done = !hw.done; save(); renderAll(); });
 }
 function deleteHomework(id) {
-  data.homework = data.homework.filter(h => h.id !== id);
-  save(); renderAll();
+  withRowOut("hw-" + id, () => {
+    data.homework = data.homework.filter(h => h.id !== id);
+    save(); renderAll();
+  });
 }
 function clearDoneHomework() {
   data.homework = data.homework.filter(h => !h.done);
@@ -2085,7 +2156,7 @@ function hwItem(h) {
         `<div class="thumb"><img src="${src}" onclick="openImage(this.src)" alt="Anhang"></div>`).join("")}</div>`
     : "";
   return `
-    <div class="item ${h.done ? "done" : ""}">
+    <div class="item ${h.done ? "done" : ""}" data-row="hw-${h.id}">
       <input type="checkbox" ${h.done ? "checked" : ""} onchange="toggleHomework('${h.id}')" title="Als erledigt markieren">
       <div class="grow">
         <div class="title">${esc(h.title)} ${classBadge(h.classId)}${hasImg ? ` <span class="badge untis">📷 ${h.images.length}</span>` : ""}</div>
@@ -2129,8 +2200,10 @@ function addTest() {
   save(); renderAll();
 }
 function deleteTest(id) {
-  data.tests = data.tests.filter(t => t.id !== id);
-  save(); renderAll();
+  withRowOut("test-" + id, () => {
+    data.tests = data.tests.filter(t => t.id !== id);
+    save(); renderAll();
+  });
 }
 function countdown(dateStr) {
   const n = daysUntil(dateStr);
@@ -2143,7 +2216,7 @@ function countdown(dateStr) {
 function testItem(t) {
   const fromUntis = t.untisId != null || t.examKey ? `<span class="badge untis">WebUntis</span>` : "";
   return `
-    <div class="item">
+    <div class="item" data-row="test-${t.id}">
       <div class="grow">
         <div class="title">${esc(t.type)} ${classBadge(t.classId)}${fromUntis}</div>
         <div class="sub">${fmtDate(t.date)}${t.topic ? " · " + esc(t.topic) : ""}</div>
@@ -3009,7 +3082,7 @@ function removePending(i) { pendingImages.splice(i, 1); renderPending(); }
 /* --- Kamera --- */
 let camStream = null, camFacing = "environment";
 async function openCamera() {
-  document.getElementById("cam-overlay").style.display = "flex";
+  showOverlay("cam-overlay");
   camMsg("");
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
     camMsg("Kamera ist hier nicht verfügbar — nutze „Bild hochladen“.");
@@ -3029,7 +3102,7 @@ async function openCamera() {
 function closeCamera() {
   if (camStream) { camStream.getTracks().forEach(t => t.stop()); camStream = null; }
   document.getElementById("cam-video").srcObject = null;
-  document.getElementById("cam-overlay").style.display = "none";
+  hideOverlay("cam-overlay");
 }
 async function capturePhoto() {
   const v = document.getElementById("cam-video");
@@ -3050,9 +3123,9 @@ async function switchCamera() {
 /* --- Bild groß anzeigen --- */
 function openImage(src) {
   document.getElementById("img-full").src = src;
-  document.getElementById("img-overlay").style.display = "flex";
+  showOverlay("img-overlay");
 }
-function closeImage() { document.getElementById("img-overlay").style.display = "none"; }
+function closeImage() { hideOverlay("img-overlay"); }
 
 /* ---------- Lokale Konten (nur in diesem Browser) ---------- */
 let authMode = "login";
@@ -3072,11 +3145,11 @@ async function hashPassword(password, salt, algo) {
 
 function openAuth(mode) {
   setAuthMode(mode || "login");
-  document.getElementById("auth-overlay").style.display = "flex";
+  showOverlay("auth-overlay");
   document.getElementById("auth-user").focus();
 }
 function closeAuth() {
-  document.getElementById("auth-overlay").style.display = "none";
+  hideOverlay("auth-overlay");
   document.getElementById("auth-pass").value = "";
   document.getElementById("auth-pass2").value = "";
   authMsg("");
@@ -3242,9 +3315,9 @@ function openSettings() {
   updateThemeButtons(currentThemeSetting());
   document.getElementById("set-remember").checked = !!(data.untis && data.untis.remember);
   document.getElementById("set-delete-acc").style.display = activeAccount() ? "" : "none";
-  document.getElementById("settings-overlay").style.display = "flex";
+  showOverlay("settings-overlay");
 }
-function closeSettings() { document.getElementById("settings-overlay").style.display = "none"; }
+function closeSettings() { hideOverlay("settings-overlay"); }
 
 function renderSettingsProfile() {
   const acc = activeAccount();
@@ -3341,8 +3414,10 @@ function addGrade() {
   save(); renderAll();
 }
 function deleteGrade(id) {
-  data.grades = data.grades.filter(g => g.id !== id);
-  save(); renderAll();
+  withRowOut("grade-" + id, () => {
+    data.grades = data.grades.filter(g => g.id !== id);
+    save(); renderAll();
+  });
 }
 function gradePillClass(v) { return "g" + Math.min(6, Math.max(1, Math.round(v))); }
 function weightedAverage(grades) {
@@ -3381,7 +3456,7 @@ function renderGrades() {
     const goal = cls ? goalOf(cls.id) : null;
     const dot = cls ? `<div class="color-dot" style="background:${cls.color}"></div>` : "";
     const rows = list.map(g => `
-      <div class="item">
+      <div class="item" data-row="grade-${g.id}">
         <div class="grade-pill ${gradePillClass(g.value)}">${g.value}</div>
         <div class="grow">
           <div class="title">${esc(g.type)}${g.weight > 1 ? ` <span class="badge untis">×${g.weight}</span>` : ""}</div>
@@ -3847,11 +3922,11 @@ function openDay(ds) {
     `<div class="day-sec"><div class="day-h">📚 Unterricht</div>${lessonRows}</div>` +
     `<div class="day-sec"><div class="day-h">📌 Hausaufgaben fällig</div>${hwRows}</div>` +
     `<div class="day-sec"><div class="day-h">📝 Prüfungen</div>${examRows}</div>`;
-  document.getElementById("day-overlay").style.display = "flex";
+  showOverlay("day-overlay");
   const inp = document.getElementById("day-event-input");
   if (inp) inp.focus();
 }
-function closeDay() { document.getElementById("day-overlay").style.display = "none"; dayOpen = null; }
+function closeDay() { hideOverlay("day-overlay"); dayOpen = null; }
 function addDayEvent() {
   if (!dayOpen) return;
   const inp = document.getElementById("day-event-input");
@@ -4079,10 +4154,10 @@ const TIMER_LABEL = { focus: "Lernen", short: "Pause", long: "Lange Pause" };
 const RING_LEN = 553;
 let timer = { mode: "focus", remaining: TIMER_DUR.focus, running: false, iv: null };
 function openTimer() {
-  document.getElementById("timer-overlay").style.display = "flex";
+  showOverlay("timer-overlay");
   renderTimer();
 }
-function closeTimer() { document.getElementById("timer-overlay").style.display = "none"; }
+function closeTimer() { hideOverlay("timer-overlay"); }
 function setTimerMode(m) {
   if (timer.running) stopTicking();
   timer.mode = m;
