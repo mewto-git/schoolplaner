@@ -94,6 +94,11 @@
     --radius-lg: 16px;
     --radius-xl: 22px;
 
+    /* Überschriften und große Zahlen in der runden Systemschrift (SF Pro
+       Rounded auf Apple-Geräten). Kein Download, fällt sonst sauber zurück. */
+    --font-rounded: ui-rounded, "SF Pro Rounded", -apple-system, BlinkMacSystemFont,
+                    "Segoe UI Variable Display", "Segoe UI", Roboto, sans-serif;
+
     --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.04), 0 4px 14px rgba(0, 0, 0, 0.05);
     --shadow-2: 0 8px 30px rgba(0, 0, 0, 0.10);
     --shadow-3: 0 20px 60px rgba(0, 0, 0, 0.20);
@@ -163,6 +168,25 @@
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  /* Symbole: dünne Striche, Farbe erbt vom Text. `stroke` und `fill` sind
+     vererbbare SVG-Eigenschaften, deshalb greifen sie auch in <use>. */
+  .ic {
+    width: 1.06em; height: 1.06em;
+    vertical-align: -0.17em;
+    flex-shrink: 0;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.75;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  h2 > .ic, h3 > .ic { color: var(--accent); margin-right: 8px; vertical-align: -0.15em; }
+  .day-h > .ic { margin-right: 6px; vertical-align: -0.2em; width: 1.25em; height: 1.25em; }
+  button > .ic { margin-right: 6px; }
+  .icon-btn > .ic, .modal-close > .ic { margin: 0; width: 18px; height: 18px; }
+  .theme-pill > .ic { margin-right: 5px; }
+  .account-menu button > .ic { color: var(--muted); }
 
   html {
     background: var(--bg);
@@ -296,6 +320,11 @@
   .page { display: none; }
   .page.active { display: block; }
 
+  h1, h2, h3,
+  .stat .num, .abs-kpi .n, .timer-time, .grade-pill, .widget .w-main,
+  .tl-name, .chg-t, .grade-group-head .g-name, .cal-head h2 {
+    font-family: var(--font-rounded);
+  }
   h2 {
     font-size: 17px;
     font-weight: 600;
@@ -473,39 +502,39 @@
   .stat.green .num  { color: var(--ok); }
 
   /* ===== „Heute"-Widget (wie am Home-Bildschirm) ===== */
+  /* Der Tages-Streifen ist Glas wie die anderen Karten. Seine Bedeutung
+     trägt die Typografie, nicht die Farbe. */
   .widget {
     position: relative;
     border-radius: var(--radius-xl);
-    padding: 18px 20px;
+    padding: 20px 22px;
     margin-bottom: 16px;
-    color: #fff;
-    background: linear-gradient(150deg, #4B9BFF 0%, #1476FF 52%, #0A57E0 100%);
-    box-shadow: 0 10px 30px rgba(10, 87, 224, 0.28);
+    color: var(--text);
+    background: var(--glass);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    border: 0.5px solid var(--glass-line);
+    box-shadow: var(--glass-shadow), inset 0 1px 0 var(--glass-edge);
     overflow: hidden;
-  }
-  .widget::after {
-    content: ""; position: absolute; inset: 0;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0) 55%);
-    pointer-events: none;
   }
   .widget .w-date {
     font-size: 12px; font-weight: 600; text-transform: uppercase;
-    letter-spacing: 0.06em; opacity: 0.85;
+    letter-spacing: 0.06em; color: var(--accent);
   }
-  .widget .w-main { font-size: 24px; font-weight: 700; letter-spacing: -0.03em; margin-top: 3px; }
-  .widget .w-sub  { font-size: 14px; opacity: 0.9; margin-top: 3px; }
+  .widget .w-main { font-size: 27px; font-weight: 700; letter-spacing: -0.035em; margin-top: 4px; line-height: 1.2; }
+  .widget .w-sub  { font-size: 14.5px; color: var(--muted); margin-top: 4px; }
   .widget .w-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 13px; position: relative; z-index: 1; }
   .widget .w-chip {
     font-size: 12.5px; font-weight: 600;
-    padding: 4px 11px; border-radius: 999px;
-    background: rgba(255, 255, 255, 0.22);
-    box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.45);
+    padding: 5px 12px; border-radius: 999px;
+    background: var(--fill-3);
+    box-shadow: inset 0 0.5px 0 var(--glass-edge);
   }
   /* Lichtreflex quer über das Glas */
   .widget::before {
     content: ""; position: absolute;
     top: -60%; left: -20%; width: 70%; height: 220%;
-    background: linear-gradient(100deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0));
+    background: linear-gradient(100deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0));
     transform: rotate(8deg);
     pointer-events: none;
   }
@@ -588,6 +617,17 @@
   .tt-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
   .tt-legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12.5px; color: var(--muted); margin-top: 10px; }
   .tt-legend b { font-weight: 600; }
+
+  .search-field { display: block; }
+  .search-field .field-ic {
+    position: absolute;
+    left: 12px; top: 50%;
+    transform: translateY(-50%);
+    width: 17px; height: 17px;
+    color: var(--muted-2);
+    pointer-events: none;
+  }
+  .search-field input { padding-left: 36px; }
 
   /* ===== Suchergebnisse ===== */
   .dropdown {
@@ -1148,8 +1188,8 @@
     .stat { min-width: calc(50% - 4px); flex: 1 1 calc(50% - 4px); padding: 12px 14px; }
     .stat .num { font-size: 24px; }
 
-    .widget { padding: 16px 18px; border-radius: 20px; }
-    .widget .w-main { font-size: 21px; }
+    .widget { padding: 17px 18px; border-radius: 20px; }
+    .widget .w-main { font-size: 23px; }
 
     .fab { right: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); width: 52px; height: 52px; }
     .fab svg { width: 25px; height: 25px; }
@@ -1362,6 +1402,99 @@
 </head>
 <body>
 
+<!-- Symbolsatz im Stil von Apples SF Symbols: dünne Striche, runde Enden.
+     Als <symbol> definiert und über <use> eingesetzt, damit jedes Symbol nur
+     einmal im Dokument steht. -->
+<svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
+  <symbol id="ic-calendar" viewBox="0 0 24 24">
+    <rect x="3" y="5" width="18" height="16" rx="3.2"/><path d="M8 2.6v4M16 2.6v4M3 10h18"/>
+  </symbol>
+  <symbol id="ic-calendar-range" viewBox="0 0 24 24">
+    <rect x="3" y="5" width="18" height="16" rx="3.2"/><path d="M8 2.6v4M16 2.6v4M3 10h18"/>
+    <path d="M8.6 15.5h6.8"/><circle cx="8" cy="15.5" r="0.9"/><circle cx="16" cy="15.5" r="0.9"/>
+  </symbol>
+  <symbol id="ic-swap" viewBox="0 0 24 24">
+    <path d="M3.5 8.5h14M14.2 5.2l3.3 3.3-3.3 3.3"/><path d="M20.5 15.5h-14M9.8 12.2l-3.3 3.3 3.3 3.3"/>
+  </symbol>
+  <symbol id="ic-clock" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="9"/><path d="M12 6.6v5.7l3.6 2.1"/>
+  </symbol>
+  <symbol id="ic-target" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="8.6"/><circle cx="12" cy="12" r="4.4"/><circle cx="12" cy="12" r="0.9"/>
+  </symbol>
+  <symbol id="ic-chart" viewBox="0 0 24 24">
+    <path d="M3.6 3.6v16.8h16.8"/><path d="M6.8 16.4l4.1-4.6 3.2 2.8 5.1-6"/><path d="M19.2 8.6h-3.4M19.2 8.6v3.4"/>
+  </symbol>
+  <symbol id="ic-link" viewBox="0 0 24 24">
+    <path d="M10.2 13.6a4.2 4.2 0 0 0 6 0l2.6-2.6a4.2 4.2 0 1 0-6-6l-1.3 1.3"/>
+    <path d="M13.8 10.4a4.2 4.2 0 0 0-6 0l-2.6 2.6a4.2 4.2 0 1 0 6 6l1.3-1.3"/>
+  </symbol>
+  <symbol id="ic-person" viewBox="0 0 24 24">
+    <circle cx="12" cy="8" r="3.8"/><path d="M4.8 20.4c0-3.6 3.2-5.9 7.2-5.9s7.2 2.3 7.2 5.9"/>
+  </symbol>
+  <symbol id="ic-slash-circle" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="8.8"/><path d="M5.8 5.8l12.4 12.4"/>
+  </symbol>
+  <symbol id="ic-sparkles" viewBox="0 0 24 24">
+    <path d="M10.5 3.2l1.5 4.1 4.1 1.5-4.1 1.5-1.5 4.1L9 10.3 4.9 8.8 9 7.3z"/>
+    <path d="M17.6 14.2l.9 2.4 2.4.9-2.4.9-.9 2.4-.9-2.4-2.4-.9 2.4-.9z"/>
+  </symbol>
+  <symbol id="ic-share" viewBox="0 0 24 24">
+    <path d="M12 15.4V3.6"/><path d="M8.4 7.2L12 3.6l3.6 3.6"/>
+    <path d="M7.4 10.6H5.6A1.6 1.6 0 0 0 4 12.2v7.2a1.6 1.6 0 0 0 1.6 1.6h12.8a1.6 1.6 0 0 0 1.6-1.6v-7.2a1.6 1.6 0 0 0-1.6-1.6h-1.8"/>
+  </symbol>
+  <symbol id="ic-bell" viewBox="0 0 24 24">
+    <path d="M18.2 9.4a6.2 6.2 0 1 0-12.4 0c0 5-2.1 6.6-2.1 6.6h16.6s-2.1-1.6-2.1-6.6z"/>
+    <path d="M13.8 19.2a2.1 2.1 0 0 1-3.6 0"/>
+  </symbol>
+  <symbol id="ic-bell-slash" viewBox="0 0 24 24">
+    <path d="M18.2 9.4a6.2 6.2 0 0 0-9.6-5.2M5.9 7.6a6.2 6.2 0 0 0-.1 1.8c0 5-2.1 6.6-2.1 6.6h12.4"/>
+    <path d="M13.8 19.2a2.1 2.1 0 0 1-3.6 0"/><path d="M3.6 3.6l16.8 16.8"/>
+  </symbol>
+  <!-- Regler statt Zahnrad: ein Zahnrad aus dünnen Strichen ist bei 18 px
+       nicht von der Sonne zu unterscheiden. -->
+  <symbol id="ic-sliders" viewBox="0 0 24 24">
+    <path d="M3.5 7h5M12.5 7h8M3.5 17h8M15.5 17h5"/>
+    <circle cx="10.5" cy="7" r="2.2"/><circle cx="13.5" cy="17" r="2.2"/>
+  </symbol>
+  <symbol id="ic-camera" viewBox="0 0 24 24">
+    <path d="M4.6 8.4h2.6l1.5-2.3h6.6l1.5 2.3h2.6A1.6 1.6 0 0 1 21 10v8a1.6 1.6 0 0 1-1.6 1.6H4.6A1.6 1.6 0 0 1 3 18v-8a1.6 1.6 0 0 1 1.6-1.6z"/>
+    <circle cx="12" cy="13.6" r="3.6"/>
+  </symbol>
+  <symbol id="ic-mic" viewBox="0 0 24 24">
+    <rect x="9" y="2.8" width="6" height="11.2" rx="3"/>
+    <path d="M5.6 11.6a6.4 6.4 0 0 0 12.8 0"/><path d="M12 18v3.2"/>
+  </symbol>
+  <symbol id="ic-photo" viewBox="0 0 24 24">
+    <rect x="3" y="4.6" width="18" height="14.8" rx="2.8"/><circle cx="8.6" cy="9.6" r="1.7"/>
+    <path d="M3.6 17.2l4.9-4.6 3.6 3.3 3-2.7 5.3 4.6"/>
+  </symbol>
+  <symbol id="ic-search" viewBox="0 0 24 24">
+    <circle cx="10.6" cy="10.6" r="6.6"/><path d="M15.5 15.5L21 21"/>
+  </symbol>
+  <symbol id="ic-pencil" viewBox="0 0 24 24">
+    <path d="M4 20.2l.9-3.7L15.7 5.7a2 2 0 0 1 2.8 0l.8.8a2 2 0 0 1 0 2.8L8.5 19.3 4.8 20.2z"/>
+    <path d="M14.4 7l2.6 2.6"/>
+  </symbol>
+  <symbol id="ic-checklist" viewBox="0 0 24 24">
+    <path d="M3.6 7l1.9 1.9L8.9 5.4"/><path d="M3.6 16l1.9 1.9 3.4-3.5"/><path d="M12.4 7.4h8M12.4 16.4h8"/>
+  </symbol>
+  <symbol id="ic-book" viewBox="0 0 24 24">
+    <path d="M12 6.6S9.8 4.4 5 4.4v13.2C9.8 17.6 12 19.8 12 19.8s2.2-2.2 7-2.2V4.4C14.2 4.4 12 6.6 12 6.6z"/>
+    <path d="M12 6.6v13.2"/>
+  </symbol>
+  <symbol id="ic-display" viewBox="0 0 24 24">
+    <rect x="3" y="4.6" width="18" height="12.2" rx="2.2"/><path d="M8.6 20.4h6.8M12 16.8v3.6"/>
+  </symbol>
+  <symbol id="ic-sun" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="4.2"/>
+    <path d="M12 2.6v2.3M12 19.1v2.3M2.6 12h2.3M19.1 12h2.3M5.6 5.6l1.6 1.6M16.8 16.8l1.6 1.6M18.4 5.6l-1.6 1.6M7.2 16.8l-1.6 1.6"/>
+  </symbol>
+  <symbol id="ic-moon" viewBox="0 0 24 24">
+    <path d="M20.2 14.6A8.6 8.6 0 0 1 9.4 3.8a8.6 8.6 0 1 0 10.8 10.8z"/>
+  </symbol>
+</svg>
+
 <div class="aurora-blob aurora-1"></div>
 <div class="aurora-blob aurora-2"></div>
 <div class="aurora-blob aurora-3"></div>
@@ -1388,7 +1521,7 @@
   </nav>
 
   <div class="account-area">
-    <button class="icon-btn" id="settings-btn" title="Einstellungen" aria-label="Einstellungen" onclick="openSettings()">⚙️</button>
+    <button class="icon-btn" id="settings-btn" title="Einstellungen" aria-label="Einstellungen" onclick="openSettings()"><svg class="ic"><use href="#ic-sliders"/></svg></button>
     <button class="account-btn" id="account-btn" onclick="openAuth('login')">Anmelden</button>
     <button class="account-chip" id="account-chip" style="display:none" onclick="toggleAccountMenu(event)">
       <span class="avatar" id="account-avatar"></span>
@@ -1396,7 +1529,7 @@
     </button>
     <div class="account-menu" id="account-menu" style="display:none">
       <div class="who" id="account-who"></div>
-      <button onclick="openSettings()">⚙️ Einstellungen</button>
+      <button onclick="openSettings()"><svg class="ic"><use href="#ic-sliders"/></svg> Einstellungen</button>
       <button class="danger" onclick="logout()">Abmelden</button>
     </div>
   </div>
@@ -1438,7 +1571,7 @@
 <div class="modal-overlay" id="cam-overlay" style="display:none" onclick="if(event.target===this) closeCamera()">
   <div class="modal cam-modal">
     <button class="modal-close" onclick="closeCamera()" title="Schließen">✕</button>
-    <h3>📷 Tafel fotografieren</h3>
+    <h3><svg class="ic"><use href="#ic-camera"/></svg> Tafel fotografieren</h3>
     <video id="cam-video" autoplay playsinline muted></video>
     <div class="cam-actions">
       <button class="primary" onclick="capturePhoto()">Aufnehmen</button>
@@ -1474,7 +1607,7 @@
 <div class="modal-overlay" id="timer-overlay" style="display:none" onclick="if(event.target===this) closeTimer()">
   <div class="modal timer-modal">
     <button class="modal-close" onclick="closeTimer()" title="Schließen">✕</button>
-    <h3>⏱️ Lernzeit</h3>
+    <h3><svg class="ic"><use href="#ic-clock"/></svg> Lernzeit</h3>
     <div class="timer-ring">
       <svg viewBox="0 0 200 200">
         <circle class="ring-bg" cx="100" cy="100" r="88"></circle>
@@ -1509,11 +1642,11 @@
     <div id="ov-widget"></div>
     <div id="ov-changes-card"></div>
     <div class="card">
-      <h2 id="ov-today-title">📅 Dein Tag</h2>
+      <h2 id="ov-today-title"><svg class="ic"><use href="#ic-calendar"/></svg> Dein Tag</h2>
       <div id="ov-today" class="today-list"></div>
     </div>
     <div class="card">
-      <h2>⏳ Jetzt dran <small>heute &amp; morgen fällig</small></h2>
+      <h2><svg class="ic"><use href="#ic-clock"/></svg> Jetzt dran <small>heute &amp; morgen fällig</small></h2>
       <div id="ov-due"></div>
     </div>
   </section>
@@ -1533,9 +1666,9 @@
         <input id="hw-notes" type="text" placeholder="Notizen (optional, z. B. Seite 42, Aufgaben 1–5)" style="flex:1">
       </div>
       <div class="form-row" style="margin-top:10px; align-items:center">
-        <button class="ghost tool" id="hw-mic" onclick="toggleDictation()">🎤 Diktieren</button>
-        <button class="ghost tool" onclick="openCamera()">📷 Tafel fotografieren</button>
-        <button class="ghost tool" onclick="document.getElementById('hw-image-input').click()">🖼️ Bild hochladen</button>
+        <button class="ghost tool" id="hw-mic" onclick="toggleDictation()"><svg class="ic"><use href="#ic-mic"/></svg> Diktieren</button>
+        <button class="ghost tool" onclick="openCamera()"><svg class="ic"><use href="#ic-camera"/></svg> Tafel fotografieren</button>
+        <button class="ghost tool" onclick="document.getElementById('hw-image-input').click()"><svg class="ic"><use href="#ic-photo"/></svg> Bild hochladen</button>
         <input type="file" id="hw-image-input" accept="image/*" multiple style="display:none"
                onchange="handleImageFiles(this.files)">
         <span class="hint" id="hw-tools-msg" style="margin:0"></span>
@@ -1626,7 +1759,7 @@
       <div class="hint">Notenschnitt wird gewichtet berechnet (z. B. eine Schularbeit zählt doppelt).</div>
     </div>
     <div class="card">
-      <h2>🎯 Notenziel <small>was brauchst du in der nächsten Prüfung?</small></h2>
+      <h2><svg class="ic"><use href="#ic-target"/></svg> Notenziel <small>was brauchst du in der nächsten Prüfung?</small></h2>
       <div class="form-row">
         <select id="goal-class" style="flex:1; min-width:150px" onchange="renderGoalPanel()"></select>
         <select id="goal-target" style="width:150px" onchange="setGoal()" title="Zielschnitt">
@@ -1648,7 +1781,7 @@
       <div id="goal-panel"></div>
     </div>
     <div class="card">
-      <h2>🗓️ Zeitraum <small>welche Noten zählen zum Schnitt?</small></h2>
+      <h2><svg class="ic"><use href="#ic-calendar-range"/></svg> Zeitraum <small>welche Noten zählen zum Schnitt?</small></h2>
       <div class="segmented" id="term-seg">
         <button type="button" data-term="current" onclick="setGradeTerm('current')">Aktuelles Semester</button>
         <button type="button" data-term="year" onclick="setGradeTerm('year')">Ganzes Schuljahr</button>
@@ -1663,7 +1796,7 @@
       <div class="hint" id="term-info"></div>
     </div>
     <div class="card">
-      <h2>📈 Notenverlauf <small>gewichteter Schnitt über die Zeit</small></h2>
+      <h2><svg class="ic"><use href="#ic-chart"/></svg> Notenverlauf <small>gewichteter Schnitt über die Zeit</small></h2>
       <div id="grade-chart"></div>
     </div>
     <div class="card">
@@ -1675,14 +1808,15 @@
   <!-- STUNDENPLAN -->
   <section class="page" id="page-timetable">
     <div class="card">
-      <h2>🔗 WebUntis-Synchronisierung <small>füllt Fächer, Stundenplan &amp; Prüfungen automatisch</small></h2>
+      <h2><svg class="ic"><use href="#ic-link"/></svg> WebUntis-Synchronisierung <small>füllt Fächer, Stundenplan &amp; Prüfungen automatisch</small></h2>
       <div class="hint" style="margin-top:2px; margin-bottom:10px">
         Inoffizielles Schülerprojekt – nicht mit Untis/WebUntis verbunden oder von Untis freigegeben.
         Die Anmeldung erfolgt mit deinem <strong>eigenen WebUntis-Konto auf eigene Verantwortung</strong>.
       </div>
       <div class="form-row">
-        <div style="flex:1; position:relative; min-width:240px">
-          <input id="un-search" type="text" placeholder="🔍 Schule suchen (Name oder Stadt)…" autocomplete="off" style="width:100%" oninput="schoolSearchInput()">
+        <div class="search-field" style="flex:1; position:relative; min-width:240px">
+          <svg class="ic field-ic"><use href="#ic-search"/></svg>
+          <input id="un-search" type="text" placeholder="Schule suchen (Name oder Stadt)…" autocomplete="off" style="width:100%" oninput="schoolSearchInput()">
           <div id="un-results" class="dropdown" style="display:none"></div>
         </div>
       </div>
@@ -1792,9 +1926,9 @@
     <div class="set-sec">
       <div class="set-h">Erscheinungsbild</div>
       <div class="theme-pills">
-        <button type="button" class="theme-pill" data-theme-opt="system" onclick="setTheme('system')">🖥️ System</button>
-        <button type="button" class="theme-pill" data-theme-opt="light" onclick="setTheme('light')">☀️ Hell</button>
-        <button type="button" class="theme-pill" data-theme-opt="dark" onclick="setTheme('dark')">🌙 Dunkel</button>
+        <button type="button" class="theme-pill" data-theme-opt="system" onclick="setTheme('system')"><svg class="ic"><use href="#ic-display"/></svg> System</button>
+        <button type="button" class="theme-pill" data-theme-opt="light" onclick="setTheme('light')"><svg class="ic"><use href="#ic-sun"/></svg> Hell</button>
+        <button type="button" class="theme-pill" data-theme-opt="dark" onclick="setTheme('dark')"><svg class="ic"><use href="#ic-moon"/></svg> Dunkel</button>
       </div>
     </div>
 
@@ -2159,7 +2293,7 @@ function hwItem(h) {
     <div class="item ${h.done ? "done" : ""}" data-row="hw-${h.id}">
       <input type="checkbox" ${h.done ? "checked" : ""} onchange="toggleHomework('${h.id}')" title="Als erledigt markieren">
       <div class="grow">
-        <div class="title">${esc(h.title)} ${classBadge(h.classId)}${hasImg ? ` <span class="badge untis">📷 ${h.images.length}</span>` : ""}</div>
+        <div class="title">${esc(h.title)} ${classBadge(h.classId)}${hasImg ? ` <span class="badge untis"><svg class="ic" style="width:1em;height:1em;vertical-align:-0.13em"><use href="#ic-photo"/></svg> ${h.images.length}</span>` : ""}</div>
         ${h.notes ? `<div class="sub">${esc(h.notes)}</div>` : ""}
         ${imgs}
       </div>
@@ -2469,7 +2603,9 @@ function changeRow(c) {
     if (c.orgSubject) bits.push(`statt ${c.orgSubject}`);
   }
   if (c.info) bits.push(c.info);
-  const icon = c.status === "cancelled" ? "🚫" : "🔄";
+  const icon = c.status === "cancelled"
+    ? `<svg class="ic" style="color:var(--danger)"><use href="#ic-slash-circle"/></svg>`
+    : `<svg class="ic" style="color:var(--warn)"><use href="#ic-swap"/></svg>`;
   const head = c.status === "cancelled" ? `${name} entfällt` : `${name} — Vertretung`;
   return `
     <div class="chg ${c.status === "cancelled" ? "cancel" : "sub"}">
@@ -2506,12 +2642,12 @@ function renderChangesCard() {
   const newCount = list.filter(c => c.isNew).length;
   el.innerHTML = `
     <div class="card">
-      <h2>🔄 Änderungen im Stundenplan
+      <h2><svg class="ic"><use href="#ic-swap"/></svg> Änderungen im Stundenplan
         <small>${list.length ? list.length + " in den nächsten Tagen" : "aus WebUntis"}</small>
       </h2>
       ${notes.map(n => `
         <div class="chg free">
-          <div class="chg-icon">🎉</div>
+          <div class="chg-icon"><svg class="ic" style="color:var(--ok)"><use href="#ic-sparkles"/></svg></div>
           <div class="grow">
             <div class="chg-t">${esc(n.label)}</div>
             <div class="chg-s">${esc(n.text)}</div>
@@ -2532,7 +2668,7 @@ function renderTodayTimeline() {
   if (!el) return;
   const ds = todayStr();
   const dateLabel = new Date().toLocaleDateString(LOCALE, { weekday: "long", day: "numeric", month: "long" });
-  if (title) title.innerHTML = `📅 Dein Tag <small>${esc(dateLabel)}</small>`;
+  if (title) title.innerHTML = `<svg class="ic"><use href="#ic-calendar"/></svg> Dein Tag <small>${esc(dateLabel)}</small>`;
 
   if (weekdayIdx(ds) === -1) {
     el.innerHTML = `<div class="empty">Wochenende — heute kein Unterricht. 🛋️</div>`;
@@ -3026,7 +3162,7 @@ function toggleDictation() {
   recog.onend = () => {
     recogActive = false;
     btn.classList.remove("recording");
-    btn.textContent = "🎤 Diktieren";
+    btn.innerHTML = `<svg class="ic"><use href="#ic-mic"/></svg> Diktieren`;
     if (finalText.trim()) toolsMsg("Aufgenommen — du kannst den Text noch anpassen.");
   };
   try { recog.start(); } catch (e) { toolsMsg("Spracheingabe konnte nicht gestartet werden."); }
@@ -3758,7 +3894,7 @@ function renderAbsences() {
   if (!st.list.length) {
     el.innerHTML = synced ? `
       <div class="card">
-        <h2>🩺 Fehlstunden <small>aus WebUntis</small></h2>
+        <h2><svg class="ic"><use href="#ic-person"/></svg> Fehlstunden <small>aus WebUntis</small></h2>
         <div class="empty">Keine Fehlzeiten im laufenden Schuljahr — oder deine Schule gibt sie über WebUntis nicht heraus.</div>
       </div>` : "";
     return;
@@ -3785,7 +3921,7 @@ function renderAbsences() {
 
   el.innerHTML = `
     <div class="card">
-      <h2>🩺 Fehlstunden <small>Schuljahr ${st.year}/${String(st.year + 1).slice(2)}</small></h2>
+      <h2><svg class="ic"><use href="#ic-person"/></svg> Fehlstunden <small>Schuljahr ${st.year}/${String(st.year + 1).slice(2)}</small></h2>
       <div class="abs-top">
         <div class="abs-kpi"><div class="n">${st.list.length}</div><div class="l">Fehlzeiten</div></div>
         <div class="abs-kpi"><div class="n">${esc(hoursLabel(st.minutes))}</div><div class="l">versäumt</div></div>
@@ -3886,7 +4022,7 @@ function openDay(ds) {
       <button class="ghost" onclick="deleteDayEvent('${e.id}')" title="Löschen">✕</button>
     </div>`).join("");
   const noteSec =
-    `<div class="day-sec"><div class="day-h">🖊️ Notizen &amp; Termine</div>${noteRows}` +
+    `<div class="day-sec"><div class="day-h"><svg class="ic"><use href="#ic-pencil"/></svg> Notizen &amp; Termine</div>${noteRows}` +
     `<div class="day-add">` +
     `<input id="day-event-input" type="text" placeholder="Notiz oder Termin eintragen…" ` +
     `onkeydown="if(event.key==='Enter'){event.preventDefault();addDayEvent();}">` +
@@ -3919,9 +4055,9 @@ function openDay(ds) {
 
   document.getElementById("day-body").innerHTML =
     noteSec +
-    `<div class="day-sec"><div class="day-h">📚 Unterricht</div>${lessonRows}</div>` +
-    `<div class="day-sec"><div class="day-h">📌 Hausaufgaben fällig</div>${hwRows}</div>` +
-    `<div class="day-sec"><div class="day-h">📝 Prüfungen</div>${examRows}</div>`;
+    `<div class="day-sec"><div class="day-h"><svg class="ic"><use href="#ic-book"/></svg> Unterricht</div>${lessonRows}</div>` +
+    `<div class="day-sec"><div class="day-h"><svg class="ic"><use href="#ic-checklist"/></svg> Hausaufgaben fällig</div>${hwRows}</div>` +
+    `<div class="day-sec"><div class="day-h"><svg class="ic"><use href="#ic-pencil"/></svg> Prüfungen</div>${examRows}</div>`;
   showOverlay("day-overlay");
   const inp = document.getElementById("day-event-input");
   if (inp) inp.focus();
@@ -3968,10 +4104,11 @@ function updateNotifBtn() {
   const btn = document.getElementById("notif-toggle");
   if (!btn) return;
   if (!notifSupported() && !notifBlockedOnIOS()) { btn.style.display = "none"; return; }
-  if (notifBlockedOnIOS()) btn.textContent = "🔔 Erinnerungen (Home-Bildschirm nötig)";
-  else if (Notification.permission === "granted") btn.textContent = "🔔 Erinnerungen aktiv";
-  else if (Notification.permission === "denied") btn.textContent = "🔕 Erinnerungen blockiert";
-  else btn.textContent = "🔔 Erinnerungen aktivieren";
+  const bell = `<svg class="ic"><use href="#ic-bell"/></svg>`, bellOff = `<svg class="ic"><use href="#ic-bell-slash"/></svg>`;
+  if (notifBlockedOnIOS()) btn.innerHTML = bell + " Erinnerungen (Home-Bildschirm nötig)";
+  else if (Notification.permission === "granted") btn.innerHTML = bell + " Erinnerungen aktiv";
+  else if (Notification.permission === "denied") btn.innerHTML = bellOff + " Erinnerungen blockiert";
+  else btn.innerHTML = bell + " Erinnerungen aktivieren";
 }
 
 async function toggleNotifications() {
@@ -4095,7 +4232,7 @@ function renderInstallHint() {
   }
   el.innerHTML = `
     <div class="install-hint">
-      <div class="ih-icon">📲</div>
+      <div class="ih-icon"><svg class="ic"><use href="#ic-share"/></svg></div>
       <div class="grow" style="flex:1">
         <div class="ih-t">${title}</div>
         <div class="ih-s">${text}</div>
