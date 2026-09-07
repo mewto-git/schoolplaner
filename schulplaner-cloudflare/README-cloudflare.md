@@ -5,10 +5,12 @@ Server. Die Website sind statische Dateien; die WebUntis-Synchronisierung läuft
 als **Pages Function** (Ordner `functions/`) unter derselben Adresse.
 
 Das Design folgt den Apple Human Interface Guidelines im **Liquid-Glass-Stil**
-(iOS 26): der Inhalt liegt auf einem weichen Farbverlauf, alle Flächen darüber
-sind durchscheinendes Glas mit Lichtsaum. SF-Schrift, System-Farben, Hell/Dunkel
-automatisch nach Systemeinstellung. Wer im System „Transparenz reduzieren"
-aktiviert hat, bekommt automatisch deckende Flächen.
+(iOS 26), aber zurückhaltend: der Untergrund ist eine fast neutrale Tönung, die
+Flächen darüber sind durchscheinend statt glänzend, Farbe tragen nur Bedien-
+elemente und Warnungen. SF-Schrift (Überschriften in der runden Variante),
+System-Farben, Hell/Dunkel automatisch nach Systemeinstellung. Wer im System
+„Transparenz reduzieren" aktiviert hat, bekommt automatisch deckende Flächen.
+Symbole sind Strich-Symbole im Stil von SF Symbols, keine Emoji.
 
 Die App lässt sich am iPhone auf den Home-Bildschirm legen und öffnet mit einem
 **„Heute"-Fokus**: Tagesverlauf mit Zeitachse und Markierung für „jetzt", darüber
