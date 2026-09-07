@@ -39,6 +39,11 @@ function fmtDEshort(d) { return `${pad(d.getUTCDate())}.${pad(d.getUTCMonth() + 
 function fmtDEfull(d) { return `${pad(d.getUTCDate())}.${pad(d.getUTCMonth() + 1)}.${d.getUTCFullYear()}`; }
 function addDays(d, n) { const r = new Date(d); r.setUTCDate(r.getUTCDate() + n); return r; }
 function mondayBased(d) { return (d.getUTCDay() + 6) % 7; } // Mon=0 … Sun=6
+function fmtHM(t) {
+  const n = parseInt(t, 10);
+  if (!Number.isFinite(n)) return "";
+  return `${pad(Math.floor(n / 100))}:${pad(n % 100)}`;
+}
 
 function weekRange() {
   const now = new Date();
@@ -131,6 +136,8 @@ function parseExams(raw) {
     out.push({
       id: e.id != null ? e.id : null,
       date: fmtISO(day),
+      start: e.startTime != null ? fmtHM(e.startTime) : "",
+      end: e.endTime != null ? fmtHM(e.endTime) : "",
       type: e.examType || "Prüfung",
       subject: nameOf(e.subject),
       name: e.name || e.text || "",
@@ -233,8 +240,11 @@ async function untisSync(body) {
     try { grid = (await rpc(server, school, "getTimegridUnits", {}, session)) || []; } catch (e) { grid = []; }
     const years = await getSchoolyears(server, school, session);
     [monday, friday, note, yearEnd] = clampToSchoolyear(monday, friday, years);
+    // Two weeks at once: the current week fills the grid, the following week
+    // lets the app warn about cancellations/substitutions that are still ahead.
+    const ttEnd = yearEnd && addDays(monday, 11) > yearEnd ? yearEnd : addDays(monday, 11);
     timetable = (await rpc(server, school, "getTimetable",
-      { id: personId, type: personType, startDate: dateToYmd(monday), endDate: dateToYmd(friday) }, session)) || [];
+      { id: personId, type: personType, startDate: dateToYmd(monday), endDate: dateToYmd(ttEnd) }, session)) || [];
     const examEnd = yearEnd || addDays(monday, 180);
     exams = await getExams(server, school, session, monday, examEnd);          // → Prüfungen
     homework = await getHomework(server, school, session, monday, addDays(monday, 28)); // → Hausübungen
@@ -256,31 +266,63 @@ async function untisSync(body) {
   const subjById = {};
   for (const s of subjects) subjById[s.id] = s;
 
+  // A readable list of the school's periods ("1. Stunde 08:00–08:50").
+  const periodTimes = {};
+  for (const d of grid) {
+    let i = 0;
+    for (const u of d.timeUnits || []) {
+      i++;
+      if (!periodTimes[i]) periodTimes[i] = { start: fmtHM(u.startTime), end: fmtHM(u.endTime) };
+    }
+  }
+
+  const names = (arr) => (arr || []).map((x) => x.name).filter(Boolean).join(", ");
+  const orgNames = (arr) => (arr || []).map((x) => x.orgname).filter(Boolean).join(", ");
+
   const lessons = [];
   for (const les of timetable) {
-    if (les.code === "cancelled") continue;
     const su = les.su || [];
-    if (!su.length) continue;
     const weekday = mondayBased(ymdToDate(les.date));
     if (weekday > 4) continue;
     const units = dayUnits[weekday + 2] || globalUnits;
     const period = units[les.startTime] || globalUnits[les.startTime];
     if (!period) continue;
-    const su0 = su[0];
+    const su0 = su[0] || {};
     const subj = subjById[su0.id] || su0;                                     // → Fächer
+    const orgTeacher = orgNames(les.te);
+    const orgRoom = orgNames(les.ro);
+    const orgSubject = orgNames(su);
+    const code = String(les.code || "");
+    let status = "normal";
+    if (code === "cancelled") status = "cancelled";
+    else if (code === "irregular" || orgTeacher || orgRoom || orgSubject) status = "substitution";
+    const subject = subj.name || orgSubject || "";
+    // A slot with no subject at all and no note carries no information.
+    if (!subject && !les.substText && !les.lstext && status === "normal") continue;
     lessons.push({
+      date: fmtISO(ymdToDate(les.date)),
       day: weekday,
       period,
-      subject: subj.name || "?",
+      start: fmtHM(les.startTime),
+      end: fmtHM(les.endTime),
+      subject: subject || "?",
       subjectLong: subj.longName || "",
       color: subjectColor(subj, su0),
-      teacher: (les.te || []).map((t) => t.name).filter(Boolean).join(", "),
-      room: (les.ro || []).map((r) => r.name).filter(Boolean).join(", "),
+      teacher: names(les.te),
+      room: names(les.ro),
+      status,                                                                 // normal | substitution | cancelled
+      orgTeacher,
+      orgRoom,
+      orgSubject,
+      info: String(les.substText || les.info || les.lstext || "").trim(),
     });
   }
 
   return {
     week: `${fmtDEshort(monday)} – ${fmtDEfull(friday)}`,
+    weekStart: fmtISO(monday),
+    weekEnd: fmtISO(friday),
+    periodTimes,
     lessons,
     exams,
     homework,
