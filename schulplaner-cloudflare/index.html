@@ -589,19 +589,47 @@
     border-radius: 8px; cursor: pointer; font-weight: 500; font-size: 13.5px;
     background-image: none;
   }
-  table.tt td.tt-cancel  { background: color-mix(in srgb, var(--red) 10%, transparent); }
-  table.tt td.tt-cancel select { text-decoration: line-through; opacity: 0.65; }
+  /* Entfall: die Stunde findet NICHT statt — sie soll zurücktreten, nicht
+     hervorstechen. Feine rote Diagonalen (die übliche Stundenplan-Schraffur)
+     plus durchgestrichener, gedämpfter Fachname. Kein Farbblock, keine
+     Versalien: eine Information, ein Signal. */
+  table.tt td.tt-cancel {
+    background: repeating-linear-gradient(
+      -45deg,
+      color-mix(in srgb, var(--red) 26%, transparent) 0 1px,
+      transparent 1px 8px
+    );
+  }
+  table.tt td.tt-cancel select {
+    color: var(--muted);
+    background: transparent;
+    text-decoration: line-through;
+    text-decoration-color: color-mix(in srgb, var(--red) 65%, transparent);
+    text-decoration-thickness: 1.5px;
+  }
   table.tt td.tt-sub     { background: color-mix(in srgb, var(--orange) 11%, transparent); }
   .tt-flag {
     display: block; font-size: 10px; font-weight: 700;
     letter-spacing: 0.03em; text-transform: uppercase;
     margin: -4px 0 3px;
   }
-  .tt-flag.cancel { color: var(--danger); }
   .tt-flag.sub    { color: var(--warn); }
   .tt-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
   .tt-legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12.5px; color: var(--muted); margin-top: 10px; }
-  .tt-legend b { font-weight: 600; }
+  .tt-legend span { display: inline-flex; align-items: center; gap: 7px; }
+  .tt-legend b { font-weight: 600; color: var(--text); }
+  .tt-key {
+    width: 22px; height: 14px; border-radius: 4px; flex-shrink: 0;
+    box-shadow: inset 0 0 0 0.5px var(--glass-line);
+  }
+  .tt-key-cancel {
+    background: repeating-linear-gradient(
+      -45deg,
+      color-mix(in srgb, var(--red) 26%, transparent) 0 1px,
+      transparent 1px 8px
+    );
+  }
+  .tt-key-sub { background: color-mix(in srgb, var(--orange) 11%, transparent); }
 
   .search-field { display: block; }
   .search-field .field-ic {
@@ -2396,20 +2424,22 @@ function renderTimetable() {
       const key = d + "-" + p;
       const val = data.timetable.slots[key] || "";
       const cls = getClass(val);
-      const style = cls ? `style="background:${cls.color}26; color:${cls.color}"` : "";
       const u = info[key];
       const st = u ? u.status : "normal";
       const tdCls = st === "cancelled" ? "tt-cancel" : st === "substitution" ? "tt-sub" : "";
+      const style = cls && st !== "cancelled"
+        ? `style="background:${cls.color}26; color:${cls.color}"` : "";
       let flag = "";
-      if (st === "cancelled") flag = `<span class="tt-flag cancel">entfällt</span>`;
-      else if (st === "substitution") {
+      if (st === "substitution") {
         const what = u.orgRoom && u.room ? "Raum " + esc(u.room)
                    : u.orgTeacher && u.teacher ? esc(u.teacher)
                    : "Vertretung";
         flag = `<span class="tt-flag sub">${what}</span>`;
       }
-      const tip = u && (u.info || u.orgTeacher || u.orgRoom)
-        ? ` title="${esc([u.info, u.orgTeacher && "statt " + u.orgTeacher, u.orgRoom && "statt Raum " + u.orgRoom].filter(Boolean).join(" · "))}"` : "";
+      const tipParts = st === "cancelled" ? ["Entfällt"] : [];
+      if (u) tipParts.push(u.info, u.orgTeacher && "statt " + u.orgTeacher, u.orgRoom && "statt Raum " + u.orgRoom);
+      const tipText = tipParts.filter(Boolean).join(" · ");
+      const tip = tipText ? ` title="${esc(tipText)}"` : "";
       html += `<td class="${tdCls}"${tip}>${flag}<select ${style} data-slot="${key}" onchange="setSlot(this)">${opts}</select></td>`;
     }
     html += "</tr>";
@@ -2423,8 +2453,8 @@ function renderTimetable() {
     const n = untisWeekLessons().filter(l => l.status && l.status !== "normal").length;
     legend.innerHTML = w.start
       ? `<span><b>Woche:</b> ${esc(fmtDate(w.start))} – ${esc(fmtDate(w.end))}</span>
-         <span style="color:var(--danger)"><b>rot</b> = entfällt</span>
-         <span style="color:var(--warn)"><b>orange</b> = Vertretung / anderer Raum</span>
+         <span><span class="tt-key tt-key-cancel"></span> schraffiert &amp; durchgestrichen = entfällt</span>
+         <span><span class="tt-key tt-key-sub"></span> Vertretung / anderer Raum</span>
          ${n ? `<span>${n} Änderung${n > 1 ? "en" : ""} diese Woche</span>` : ""}`
       : "";
   }
