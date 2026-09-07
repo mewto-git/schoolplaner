@@ -457,6 +457,26 @@ async function untisSync(body) {
   };
 }
 
+/* ---------- Selbsttest ----------
+   /api/untis/health im Browser öffnen: kommt JSON zurück, laufen die
+   Functions. Kommt die 404-Seite, wurde der Ordner functions/ nicht mit
+   deployt — genau der Fehler, den die Schulsuche sonst nur indirekt meldet. */
+export async function onRequestGet(context) {
+  const path = new URL(context.request.url).pathname;
+  if (path.endsWith("/health")) {
+    return json({
+      ok: true,
+      service: "school-planner-untis",
+      endpoints: ["/api/untis/schools", "/api/untis/sync"],
+      time: new Date().toISOString(),
+    });
+  }
+  return new Response(
+    JSON.stringify({ ok: false, error: "Diesen Endpunkt gibt es nur per POST." }),
+    { status: 405, headers: { "content-type": "application/json; charset=utf-8", "allow": "POST" } }
+  );
+}
+
 /* ---------- request entry point ---------- */
 export async function onRequestPost(context) {
   const path = new URL(context.request.url).pathname;

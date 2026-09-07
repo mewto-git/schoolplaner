@@ -32,6 +32,12 @@ functions/api/untis/[[path]].js    ← die WebUntis-Sync (läuft bei Cloudflare)
 > automatisch die Endpunkte `/api/untis/sync` und `/api/untis/schools`.
 > Fehlt der Ordner, meldet die Schulsuche „HTTP 404" statt Ergebnissen.
 
+**Selbsttest nach dem Deploy:** `https://…pages.dev/api/untis/health` im Browser
+öffnen. Kommt dort JSON (`{"ok":true,…}`), laufen die Functions. Kommt die
+404-Seite, wurde `functions/` nicht mit deployt — dann das **ganze ZIP** hochladen,
+nicht einzelne Dateien, und darauf achten, dass `index.html` und `functions/`
+direkt an der Wurzel des Uploads liegen (nicht in einem Unterordner).
+
 ## In wenigen Schritten live
 ### Variante A — direkt hochladen (am schnellsten)
 1. Diesen Ordner (`schulplaner-cloudflare`) als **ZIP** packen.

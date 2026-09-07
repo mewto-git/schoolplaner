@@ -2928,7 +2928,12 @@ async function searchSchools(q) {
 
   if (!out) {
     box.innerHTML = `<div class="msg">Die Schulsuche antwortet nicht wie erwartet (HTTP ${res.status}).
-      Läuft die Seite schon auf Cloudflare Pages — mit dem Ordner <code>functions/</code>?
+      ${res.status === 404
+        ? `Unter dieser Adresse läuft keine Sync-Funktion. Zum Prüfen
+           <a href="${API_BASE}/api/untis/health" target="_blank" rel="noopener" style="color:var(--accent)">/api/untis/health</a>
+           öffnen: kommt dort JSON, liegt es an etwas anderem — kommt eine Fehlerseite,
+           wurde der Ordner <code>functions/</code> nicht mit hochgeladen.`
+        : `Versuch es gleich noch einmal.`}
       Du kannst so lange den WebUntis-Link hier einfügen.</div>`;
     return;
   }
