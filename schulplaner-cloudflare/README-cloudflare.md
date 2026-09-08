@@ -29,8 +29,6 @@ apple-touch-icon.png               ← Symbol für „Zum Home-Bildschirm"
 icons/                             ← App-Symbole 120–1024 px (+ Quelle als HTML)
 functions/api/untis/[[path]].js    ← dieselbe Sync für Git/Wrangler-Deploys
 tools/build-worker.py              ← erzeugt _worker.js aus der Function
-wrangler.jsonc                     ← Konfiguration für `npx wrangler deploy`
-.assetsignore                      ← hält Code aus den Website-Dateien heraus
 ```
 
 ## Warum es die Sync zweimal gibt
@@ -57,70 +55,62 @@ python3 tools/build-worker.py
 
 **Selbsttest nach dem Deploy:** `https://…pages.dev/api/untis/health` im Browser
 öffnen. Kommt dort JSON (`{"ok":true,…}`), läuft die Sync. Kommt die 404-Seite,
-lief kein Code — dann prüfen, ob `_worker.js` wirklich **an der Wurzel** des
-Uploads liegt (nicht in einem Unterordner) und ob das **ganze ZIP** hochgeladen
-wurde, nicht einzelne Dateien.
+prüfe zuerst, ob die Adresse wirklich auf `pages.dev` endet — und ob
+`_worker.js` an der **Wurzel** des Uploads liegt, nicht in einem Unterordner.
 
-### Variante C — mit Wrangler (funktioniert sicher)
-Klappt der Dashboard-Upload nicht, geht dieser Weg immer. Er braucht Node
-auf deinem Rechner:
+## Zuerst: es muss eine **Pages**-Seite werden
 
-```
-cd schulplaner-cloudflare
-npx wrangler pages deploy . --project-name schulplaner
-```
+Cloudflare hat zwei Produkte, die im Dashboard direkt nebeneinander liegen —
+und nur eines davon führt den Sync-Code aus:
 
-Beim ersten Mal öffnet sich ein Browserfenster zum Anmelden. Wrangler lädt
-alles hoch und baut dabei sowohl `_worker.js` als auch `functions/` mit.
-
-## Wichtig: Pages oder Worker?
-
-Cloudflare hat zwei Produkte, und im Dashboard liegen sie nebeneinander:
-
-| | Adresse | führt `_worker.js` aus? |
+| | Adresse am Ende | führt `_worker.js` aus? |
 |---|---|---|
-| **Pages** | `…pages.dev` | **ja** |
-| **Workers** | `…workers.dev` | nur mit `wrangler.jsonc` über die Konsole |
+| **Pages** ✅ | `…pages.dev` | **ja** |
+| Workers ❌ | `…workers.dev` | nein (beim Datei-Upload) |
 
-Landest du beim Anlegen auf einer `workers.dev`-Adresse, wurde ein *Worker*
-angelegt und keine *Pages*-Seite. Dort wird beim Datei-Upload nichts davon
-ausgeführt — weder `functions/` noch `_worker.js`. Die Website erscheint
-normal, aber `/api/untis/…` antwortet mit **404**. Genau daran scheitert die
-Schulsuche.
+Landest du auf einer `workers.dev`-Adresse, wurde ein *Worker* angelegt statt
+einer *Pages*-Seite. Die Website erscheint dann normal, aber `/api/untis/…`
+antwortet mit **404** und die Schulsuche findet nichts.
 
-## In wenigen Schritten live
+**Die Adresse ist die Probe:** endet sie auf `pages.dev`, ist alles richtig.
 
-### Variante A — Pages im Dashboard (ohne Konsole)
-1. Diesen Ordner als **ZIP** packen (oder das fertige ZIP nehmen).
-2. https://dash.cloudflare.com → **Workers & Pages** → **Create**.
-3. **Auf den Reiter „Pages" wechseln** — nicht bei „Workers" bleiben.
-4. **Upload assets** → Projektnamen vergeben → ZIP hochladen → **Deploy**.
-5. Du bekommst eine Adresse auf `…pages.dev`. Endet sie auf `workers.dev`,
-   war es doch der Workers-Weg — dann Variante B oder C.
+## So kommt es live
 
-### Variante B — Worker über die Konsole (bleibt auf workers.dev)
+### Variante A — Dashboard (ohne Konsole)
+1. Das ZIP bereithalten (oder diesen Ordner als ZIP packen).
+2. https://dash.cloudflare.com → links **Workers & Pages** → **Create**.
+3. **Oben auf den Reiter „Pages" wechseln.** Das ist der entscheidende
+   Schritt — die Seite startet auf „Workers", und dort wird der Code nicht
+   ausgeführt.
+4. **Upload assets** → Projektnamen vergeben (z. B. `schulplaner`) → ZIP
+   hochladen → **Deploy**.
+5. Kontrolle: Die Adresse muss auf `…pages.dev` enden.
+
+Findest du den Reiter „Pages" nicht, nimm Variante B — die legt ebenfalls
+eine Pages-Seite an.
+
+### Variante B — Konsole (legt auch eine Pages-Seite an)
 Braucht Node auf deinem Rechner. Im entpackten Ordner:
 
 ```
-npx wrangler deploy
-```
-
-`wrangler.jsonc` ist beigelegt: `_worker.js` ist der Code, alles andere die
-Website, und `.assetsignore` hält Code und Doku aus den ausgelieferten
-Dateien heraus. Beim ersten Mal öffnet sich ein Anmeldefenster im Browser.
-
-### Variante C — Pages über die Konsole
-```
 npx wrangler pages deploy . --project-name schulplaner
 ```
-Legt eine Pages-Seite an und baut `functions/` und `_worker.js` mit.
 
-### Variante D — über GitHub (Updates deployen sich automatisch)
+Beim ersten Mal öffnet sich ein Anmeldefenster im Browser. Danach steht die
+Seite unter `https://schulplaner.pages.dev`.
+
+### Variante C — über GitHub (Updates deployen sich automatisch)
 1. Ordnerinhalt in ein GitHub-Repo laden.
-2. Cloudflare → **Workers & Pages** → **Create** → **Pages** →
+2. Cloudflare → **Workers & Pages** → **Create** → Reiter **Pages** →
    **Connect to Git** → Repo wählen.
 3. Build-Einstellungen leer lassen (kein Framework, kein Build-Befehl,
    Output-Verzeichnis `/`). **Deploy**.
+
+### Eine alte workers.dev-Seite aufräumen
+Hast du vorher versehentlich einen Worker angelegt, kannst du ihn löschen:
+**Workers & Pages** → den Eintrag mit der `workers.dev`-Adresse anklicken →
+**Settings** → ganz unten **Delete**. Nötig ist das nicht, aber sonst liegen
+zwei Fassungen herum und du erwischst später die falsche.
 
 ## Am iPhone als App einrichten
 1. Die Seite in **Safari** öffnen (nicht in Chrome — nur Safari darf das).
