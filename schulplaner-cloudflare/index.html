@@ -2916,9 +2916,7 @@ async function searchSchools(q) {
     });
   } catch (e) {
     if (seq !== schoolSeq) return;
-    box.innerHTML = `<div class="msg">${navigator.onLine === false
-      ? "Keine Internetverbindung."
-      : "Der Sync-Dienst ist nicht erreichbar."} Du kannst stattdessen den Link deiner WebUntis-Seite hier einfügen.</div>`;
+    box.innerHTML = `<div class="msg">${esc(syncUnavailableMessage(null))}</div>`;
     return;
   }
   if (seq !== schoolSeq) return;
@@ -2927,14 +2925,9 @@ async function searchSchools(q) {
   try { out = await res.json(); } catch (e) { /* unten behandelt */ }
 
   if (!out) {
-    box.innerHTML = `<div class="msg">Die Schulsuche antwortet nicht wie erwartet (HTTP ${res.status}).
-      ${res.status === 404
-        ? `Unter dieser Adresse läuft keine Sync-Funktion. Zum Prüfen
-           <a href="${API_BASE}/api/untis/health" target="_blank" rel="noopener" style="color:var(--accent)">/api/untis/health</a>
-           öffnen: kommt dort JSON, liegt es an etwas anderem — kommt eine Fehlerseite,
-           wurde der Ordner <code>functions/</code> nicht mit hochgeladen.`
-        : `Versuch es gleich noch einmal.`}
-      Du kannst so lange den WebUntis-Link hier einfügen.</div>`;
+    box.innerHTML = `<div class="msg">${esc(syncUnavailableMessage(res.status))}
+      Du kannst so lange den WebUntis-Link hier einfügen — Server und Schulname
+      werden daraus gelesen.</div>`;
     return;
   }
   if (!out.ok) { box.innerHTML = `<div class="msg">${esc(out.error)}</div>`; return; }
@@ -2979,6 +2972,32 @@ document.addEventListener("click", e => {
   }
 });
 
+/* Läuft die Seite überhaupt an einer Adresse, an der es eine Function
+   geben KANN? Von der Festplatte geöffnet (file://) gibt es keine. */
+function runningFromDisk() { return location.protocol === "file:"; }
+
+function syncUnavailableMessage(status) {
+  if (runningFromDisk()) {
+    return "Diese Seite ist direkt von der Festplatte geöffnet. Dabei gibt es keinen Server — "
+         + "und ohne Server keine WebUntis-Verbindung. Lade den Ordner zu Cloudflare Pages hoch "
+         + "und öffne die Seite über die Adresse, die du dort bekommst (…pages.dev).";
+  }
+  if (navigator.onLine === false) {
+    return "Keine Internetverbindung — zum Synchronisieren brauchst du Netz. "
+         + "Deine gespeicherten Daten bleiben erhalten.";
+  }
+  if (status === 404) {
+    return "Unter dieser Adresse läuft keine Sync-Funktion (HTTP 404). Öffne zum Prüfen "
+         + API_BASE + "/api/untis/health — kommt dort eine Fehlerseite, wurde der Ordner "
+         + "functions/ nicht mit hochgeladen. Dann noch einmal das ganze ZIP hochladen.";
+  }
+  if (status) {
+    return "Der Sync-Dienst hat mit HTTP " + status + " geantwortet. "
+         + "Versuch es gleich noch einmal; bleibt es dabei, stimmt am Deployment etwas nicht.";
+  }
+  return "Der Sync-Dienst ist nicht erreichbar. Prüfe deine Verbindung und versuch es gleich noch einmal.";
+}
+
 function untisStatus(msg, tone) {
   const el = document.getElementById("un-status");
   el.textContent = msg;
@@ -2996,7 +3015,12 @@ function initUntisForm() {
   document.getElementById("un-remember").checked = !!u.remember;
   document.getElementById("un-auto").checked = !!u.auto;
   document.getElementById("un-consent").checked = !!u.consent;
-  if (u.lastSync) untisStatus("Letzte Synchronisierung: " + u.lastSync);
+  if (runningFromDisk()) {
+    untisStatus("Diese Seite ist von der Festplatte geöffnet — die WebUntis-Verbindung "
+      + "funktioniert erst über deine Cloudflare-Adresse (…pages.dev). Alles andere kannst du hier normal nutzen.");
+  } else if (u.lastSync) {
+    untisStatus("Letzte Synchronisierung: " + u.lastSync);
+  }
 }
 function saveConsent(on) {
   data.untis = data.untis || {};
@@ -3027,7 +3051,9 @@ async function syncUntis() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ server, school, user, password })
     });
-    const out = await res.json();
+    let out = null;
+    try { out = await res.json(); } catch (e) { /* keine JSON-Antwort — unten gemeldet */ }
+    if (!out) { untisStatus(syncUnavailableMessage(res.status), "error"); return; }
     if (!out.ok) { untisStatus(out.error, "error"); return; }
     const added = applyUntis(out);
     data.untis = {
@@ -3049,9 +3075,7 @@ async function syncUntis() {
     untisStatus(msg, "ok");
     if (added.changes) notifyChanges();
   } catch (e) {
-    untisStatus(navigator.onLine === false
-      ? "Keine Internetverbindung — zum Synchronisieren brauchst du Netz. Deine gespeicherten Daten bleiben erhalten."
-      : "Der Sync-Dienst ist gerade nicht erreichbar. Prüfe deine Verbindung und versuch es gleich noch einmal.", "error");
+    untisStatus(syncUnavailableMessage(null), "error");
   } finally {
     btn.disabled = false; btn.textContent = "Jetzt synchronisieren";
   }
