@@ -1,3 +1,5 @@
+/* AUTOMATISCH ERZEUGT aus functions/api/untis/[[path]].js — nicht von Hand bearbeiten.
+   Neu erzeugen mit:  python3 tools/build-worker.py           */
 /**
  * Cloudflare Pages Function — WebUntis sync for the School Planner.
  *
@@ -461,7 +463,7 @@ async function untisSync(body) {
    /api/untis/health im Browser öffnen: kommt JSON zurück, laufen die
    Functions. Kommt die 404-Seite, wurde der Ordner functions/ nicht mit
    deployt — genau der Fehler, den die Schulsuche sonst nur indirekt meldet. */
-export async function onRequestGet(context) {
+async function onRequestGet(context) {
   const path = new URL(context.request.url).pathname;
   if (path.endsWith("/health")) {
     return json({
@@ -478,7 +480,7 @@ export async function onRequestGet(context) {
 }
 
 /* ---------- request entry point ---------- */
-export async function onRequestPost(context) {
+async function onRequestPost(context) {
   const path = new URL(context.request.url).pathname;
   let body = {};
   try {
@@ -497,3 +499,25 @@ export async function onRequestPost(context) {
     return json({ ok: false, error: e instanceof UntisError ? e.message : "Unerwarteter Serverfehler." });
   }
 }
+
+
+/* ------------------------------------------------------------------ *
+ *  Pages „Advanced mode": diese Datei bedient das ganze Projekt.
+ *  /api/untis/* geht an den Code oben, alles andere an die statischen
+ *  Dateien (env.ASSETS).
+ * ------------------------------------------------------------------ */
+export default {
+  async fetch(request, env) {
+    const url = new URL(request.url);
+    if (url.pathname.startsWith("/api/untis/")) {
+      const ctx = { request };
+      if (request.method === "POST") return onRequestPost(ctx);
+      if (request.method === "GET") return onRequestGet(ctx);
+      return new Response(
+        JSON.stringify({ ok: false, error: "Diesen Endpunkt gibt es nur per POST." }),
+        { status: 405, headers: { "content-type": "application/json; charset=utf-8", "allow": "POST, GET" } }
+      );
+    }
+    return env.ASSETS.fetch(request);
+  },
+};
