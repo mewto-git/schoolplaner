@@ -29,6 +29,8 @@ apple-touch-icon.png               ← Symbol für „Zum Home-Bildschirm"
 icons/                             ← App-Symbole 120–1024 px (+ Quelle als HTML)
 functions/api/untis/[[path]].js    ← dieselbe Sync für Git/Wrangler-Deploys
 tools/build-worker.py              ← erzeugt _worker.js aus der Function
+wrangler.jsonc                     ← Konfiguration für `npx wrangler deploy`
+.assetsignore                      ← hält Code aus den Website-Dateien heraus
 ```
 
 ## Warum es die Sync zweimal gibt
@@ -53,57 +55,42 @@ nach jeder Änderung an der Function einmal:
 python3 tools/build-worker.py
 ```
 
-**Selbsttest nach dem Deploy:** `https://…pages.dev/api/untis/health` im Browser
-öffnen. Kommt dort JSON (`{"ok":true,…}`), läuft die Sync. Kommt die 404-Seite,
-prüfe zuerst, ob die Adresse wirklich auf `pages.dev` endet — und ob
-`_worker.js` an der **Wurzel** des Uploads liegt, nicht in einem Unterordner.
+**Selbsttest nach dem Deploy:** an deine Adresse `/api/untis/health` anhängen
+und im Browser öffnen. Kommt dort JSON (`{"ok":true,…}`), läuft die Sync.
+Kommt eine 404-Seite, lief kein Code — bei einem Worker heißt das meist, dass
+er ohne `wrangler.jsonc` hochgeladen wurde, bei Pages, dass das Projekt doch
+im Workers-Zweig angelegt wurde.
 
-## Zuerst: es muss eine **Pages**-Seite werden
+## Zwei Wege — und was sie unterscheidet
 
-Cloudflare hat zwei Produkte, die im Dashboard direkt nebeneinander liegen —
-und nur eines davon führt den Sync-Code aus:
+Cloudflare hat zwei Produkte, die im Dashboard nebeneinander liegen. Für den
+Schulplaner ist wichtig, **wo der Sync-Code ausgeführt wird**:
 
-| | Adresse am Ende | führt `_worker.js` aus? |
-|---|---|---|
-| **Pages** ✅ | `…pages.dev` | **ja** |
-| Workers ❌ | `…workers.dev` | nein (beim Datei-Upload) |
+| | Adresse | Sync läuft über | Deploy |
+|---|---|---|---|
+| **Worker** | `…workers.dev` | `_worker.js` + `wrangler.jsonc` | nur Konsole |
+| **Pages** | `…pages.dev` | `_worker.js` an der Wurzel | Dashboard oder Konsole |
 
-Landest du auf einer `workers.dev`-Adresse, wurde ein *Worker* angelegt statt
-einer *Pages*-Seite. Die Website erscheint dann normal, aber `/api/untis/…`
-antwortet mit **404** und die Schulsuche findet nichts.
+Der Fallstrick: Lädt man Dateien im Dashboard in ein **Worker**-Projekt hoch,
+wird gar kein Code ausgeführt — die Website erscheint, aber `/api/untis/…`
+antwortet mit **404**. Ein Worker braucht `wrangler.jsonc` und den Weg über
+die Konsole; eine Pages-Seite kommt auch ohne aus.
 
-**Die Adresse ist die Probe:** endet sie auf `pages.dev`, ist alles richtig.
+## Die Konsole öffnen
 
-## So kommt es live
-
-### Variante A — Dashboard (ohne Konsole)
-1. Das ZIP bereithalten (oder diesen Ordner als ZIP packen).
-2. https://dash.cloudflare.com → links **Workers & Pages** → **Create**.
-3. **Oben auf den Reiter „Pages" wechseln.** Das ist der entscheidende
-   Schritt — die Seite startet auf „Workers", und dort wird der Code nicht
-   ausgeführt.
-4. **Upload assets** → Projektnamen vergeben (z. B. `schulplaner`) → ZIP
-   hochladen → **Deploy**.
-5. Kontrolle: Die Adresse muss auf `…pages.dev` enden.
-
-Findest du den Reiter „Pages" nicht, nimm Variante B — die legt ebenfalls
-eine Pages-Seite an.
-
-### Variante B — Konsole (legt auch eine Pages-Seite an)
-
-**Wo ist die Konsole?**
+Beide Konsolen-Wege brauchen sie, also einmal vorweg:
 
 * **Windows:** Windows-Taste drücken, `powershell` tippen, Enter.
   Schneller: im Explorer den entpackten Ordner öffnen, oben in die
-  Adressleiste klicken, `powershell` tippen und Enter — die Konsole startet
+  Adressleiste klicken, `powershell` tippen, Enter — die Konsole startet
   dann schon im richtigen Ordner.
 * **Mac:** ⌘ + Leertaste, `terminal` tippen, Enter.
 
-**In den Ordner wechseln** (falls nicht schon dort): `cd ` tippen, dann ein
-Leerzeichen, dann den entpackten Ordner mit der Maus ins Konsolenfenster
-ziehen — der Pfad wird automatisch eingesetzt. Enter.
+**In den Ordner wechseln** (falls nicht schon dort): `cd` tippen, Leerzeichen,
+dann den entpackten Ordner mit der Maus ins Konsolenfenster ziehen — der Pfad
+wird eingesetzt. Enter.
 
-**Node vorhanden?** Prüfen mit:
+**Node vorhanden?**
 
 ```
 node -v
@@ -113,28 +100,43 @@ Kommt eine Versionsnummer wie `v22.11.0`, passt es. Kommt „nicht gefunden",
 zuerst Node von https://nodejs.org installieren (die **LTS**-Fassung), danach
 die Konsole schließen und neu öffnen.
 
-**Deployen:**
+## Variante A — Worker (Adresse endet auf workers.dev)
+
+Im entpackten Ordner:
+
+```
+npx wrangler deploy
+```
+
+Beim ersten Mal fragt npx, ob `wrangler` installiert werden darf — mit `y`
+und Enter bestätigen, danach öffnet sich ein Anmeldefenster im Browser.
+
+`wrangler.jsonc` steuert das: `_worker.js` ist der Code, alle übrigen Dateien
+sind die Website, und `.assetsignore` hält Code, Konfiguration und Doku aus
+den ausgelieferten Dateien heraus. Der Projektname (`schulplaner`) steht in
+`wrangler.jsonc` und bestimmt die Adresse.
+
+## Variante B — Pages im Dashboard (ohne Konsole)
+
+1. https://dash.cloudflare.com → **Workers & Pages** → **Create**
+2. **Oben auf den Reiter „Pages" wechseln.** Die Seite startet auf „Workers",
+   und dort wird beim Datei-Upload kein Code ausgeführt.
+3. **Upload assets** → Projektnamen vergeben → ZIP hochladen → **Deploy**
+4. Kontrolle: Die Adresse muss auf `…pages.dev` enden.
+
+## Variante C — Pages über die Konsole
 
 ```
 npx wrangler pages deploy . --project-name schulplaner
 ```
 
-Beim ersten Mal fragt npx, ob es `wrangler` installieren darf — mit `y` und
-Enter bestätigen. Danach öffnet sich ein Anmeldefenster im Browser. Am Ende
-steht die Adresse in der Konsole, sie endet auf `pages.dev`.
+## Variante D — über GitHub (Updates deployen sich automatisch)
 
-### Variante C — über GitHub (Updates deployen sich automatisch)
 1. Ordnerinhalt in ein GitHub-Repo laden.
 2. Cloudflare → **Workers & Pages** → **Create** → Reiter **Pages** →
    **Connect to Git** → Repo wählen.
 3. Build-Einstellungen leer lassen (kein Framework, kein Build-Befehl,
    Output-Verzeichnis `/`). **Deploy**.
-
-### Eine alte workers.dev-Seite aufräumen
-Hast du vorher versehentlich einen Worker angelegt, kannst du ihn löschen:
-**Workers & Pages** → den Eintrag mit der `workers.dev`-Adresse anklicken →
-**Settings** → ganz unten **Delete**. Nötig ist das nicht, aber sonst liegen
-zwei Fassungen herum und du erwischst später die falsche.
 
 ## Am iPhone als App einrichten
 1. Die Seite in **Safari** öffnen (nicht in Chrome — nur Safari darf das).

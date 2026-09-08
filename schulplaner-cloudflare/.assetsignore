@@ -1,0 +1,8 @@
+# Diese Dateien sind Programmcode oder Doku und sollen NICHT als Website
+# ausgeliefert werden. (Wird von `wrangler deploy` ausgewertet.)
+_worker.js
+wrangler.jsonc
+.assetsignore
+functions
+tools
+README-cloudflare.md
