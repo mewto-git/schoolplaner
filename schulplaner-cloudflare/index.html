@@ -1343,6 +1343,186 @@
   .chart-legend span { display: inline-flex; align-items: center; gap: 6px; }
   .chart-legend i { width: 12px; height: 3px; border-radius: 2px; display: inline-block; }
 
+  /* ===== Fokus: nur der Stundenplan ===== */
+  .focus-overlay {
+    position: fixed; inset: 0; z-index: 250;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    background: var(--bg);
+    padding: calc(20px + env(safe-area-inset-top)) 20px calc(28px + env(safe-area-inset-bottom));
+  }
+  .focus-overlay::before {
+    content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background:
+      radial-gradient(900px 640px at 50% -10%, rgba(96, 150, 224, 0.20), transparent 66%),
+      linear-gradient(180deg, rgba(120, 140, 180, 0.06), transparent 40%);
+  }
+  :root[data-theme="dark"] .focus-overlay::before {
+    background:
+      radial-gradient(900px 640px at 50% -10%, rgba(56, 104, 190, 0.26), transparent 66%),
+      linear-gradient(180deg, rgba(160, 180, 220, 0.05), transparent 40%);
+  }
+  .focus-inner { max-width: 620px; margin: 0 auto; }
+
+  .focus-close {
+    position: fixed;
+    top: calc(16px + env(safe-area-inset-top));
+    right: 16px;
+    z-index: 2;
+    display: flex; align-items: center; justify-content: center;
+    width: 38px; height: 38px; border-radius: 999px;
+    background: var(--glass-2); border: 0.5px solid var(--glass-line);
+    color: var(--muted); cursor: pointer; font-family: inherit;
+    transition: background 0.15s ease, color 0.15s ease, transform 0.15s var(--spring);
+  }
+  .focus-close:hover { background: var(--glass); color: var(--text); }
+  .focus-close:active { transform: scale(0.92); }
+  .focus-close .ic { width: 17px; height: 17px; }
+
+  .focus-head {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    margin-bottom: 22px;
+  }
+  .focus-title { text-align: center; min-width: 190px; }
+  .focus-weekday {
+    font-family: var(--font-rounded);
+    font-size: 26px; font-weight: 650; letter-spacing: -0.03em;
+  }
+  .focus-date { font-size: 13.5px; color: var(--muted); margin-top: 1px; }
+  .focus-nav {
+    display: flex; align-items: center; justify-content: center;
+    width: 40px; height: 40px; border-radius: 999px;
+    background: none; border: none; color: var(--muted);
+    cursor: pointer; font-family: inherit;
+    transition: background 0.15s ease, color 0.15s ease, transform 0.15s var(--spring);
+  }
+  .focus-nav:hover { background: var(--glass-2); color: var(--text); }
+  .focus-nav:active { transform: scale(0.9); }
+
+  /* Was gerade läuft */
+  .fnow {
+    position: relative;
+    padding: 22px 24px 20px;
+    border-radius: var(--radius-xl);
+    background: var(--glass);
+    border: 0.5px solid var(--glass-line);
+    box-shadow: var(--glass-shadow);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    overflow: hidden;
+    margin-bottom: 22px;
+  }
+  .fnow-label {
+    font-size: 11.5px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--accent);
+  }
+  .fnow-subject {
+    font-family: var(--font-rounded);
+    font-size: 34px; font-weight: 650; letter-spacing: -0.035em;
+    line-height: 1.15; margin-top: 6px;
+  }
+  .fnow-meta { font-size: 15px; color: var(--muted); margin-top: 6px; }
+  .fnow-rest {
+    font-size: 15px; font-weight: 600; margin-top: 14px;
+    font-variant-numeric: tabular-nums;
+  }
+  .fnow-bar {
+    height: 5px; border-radius: 3px; margin-top: 9px;
+    background: var(--fill-3); overflow: hidden;
+  }
+  .fnow-bar span {
+    display: block; height: 100%; border-radius: 3px;
+    background: var(--accent);
+    transition: width 1s linear;
+  }
+  .fnow.free .fnow-label { color: var(--ok); }
+  .fnow.cancelled .fnow-subject { text-decoration: line-through; color: var(--muted); }
+
+  /* Der restliche Tag */
+  .focus-list { display: flex; flex-direction: column; gap: 6px; }
+  .frow {
+    display: grid;
+    grid-template-columns: 58px 1fr auto;
+    align-items: baseline;
+    gap: 14px;
+    padding: 12px 16px;
+    border-radius: var(--radius);
+    background: var(--glass-2);
+    border: 0.5px solid var(--glass-line);
+    transition: background 0.2s ease, opacity 0.3s ease;
+  }
+  .frow-time {
+    font-size: 13.5px; font-weight: 600; color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .frow-name { font-size: 16px; font-weight: 500; letter-spacing: -0.01em; }
+  .frow-room { font-size: 13px; color: var(--muted); white-space: nowrap; }
+  .frow.past { opacity: 0.42; }
+  .frow.now {
+    background: var(--accent-soft);
+    border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+  }
+  .frow.now .frow-time { color: var(--accent); }
+  .frow.cancelled {
+    background: repeating-linear-gradient(
+      -45deg,
+      color-mix(in srgb, var(--red) 22%, transparent) 0 1px,
+      transparent 1px 8px
+    );
+  }
+  .frow.cancelled .frow-name {
+    text-decoration: line-through;
+    text-decoration-color: color-mix(in srgb, var(--red) 65%, transparent);
+    color: var(--muted);
+  }
+  .frow.substitution { background: color-mix(in srgb, var(--orange) 8%, transparent); }
+  .frow-flag {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.03em; color: var(--warn); margin-left: 8px;
+  }
+  .focus-empty {
+    text-align: center; color: var(--muted);
+    font-size: 15px; padding: 40px 10px;
+  }
+  .focus-hint {
+    text-align: center; color: var(--muted-2);
+    font-size: 12.5px; margin-top: 26px;
+  }
+
+  @media (max-width: 560px) {
+    .focus-overlay { padding-left: 14px; padding-right: 14px; }
+    .fnow { padding: 18px 18px 16px; }
+    .fnow-subject { font-size: 29px; }
+    .focus-weekday { font-size: 23px; }
+    .frow { grid-template-columns: 52px 1fr; gap: 10px; padding: 11px 13px; }
+    .frow-room { grid-column: 2; font-size: 12.5px; }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .focus-overlay { animation: focusIn 0.34s var(--spring) both; }
+    .focus-overlay.closing { animation: focusOut 0.22s ease both; }
+    /* Der Inhalt läuft gestaffelt ein — beim Öffnen und bei jedem Tageswechsel. */
+    .focus-overlay .fnow,
+    .focus-overlay .frow,
+    .focus-overlay .focus-empty {
+      animation: focusRise 0.42s var(--spring) both;
+      animation-delay: calc(var(--i, 0) * 45ms);
+    }
+  }
+  @keyframes focusIn {
+    from { opacity: 0; transform: scale(1.015); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+  @keyframes focusOut {
+    from { opacity: 1; transform: scale(1); }
+    to   { opacity: 0; transform: scale(1.01); }
+  }
+  @keyframes focusRise {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
   /* ===== Umschalter (Semester u. Ä.) ===== */
   .segmented {
     display: inline-flex; gap: 2px; padding: 2px;
@@ -1464,6 +1644,13 @@
   </symbol>
   <!-- Regler statt Zahnrad: ein Zahnrad aus dünnen Strichen ist bei 18 px
        nicht von der Sonne zu unterscheiden. -->
+  <symbol id="ic-focus" viewBox="0 0 24 24">
+    <path d="M3.5 9V5.5A2 2 0 0 1 5.5 3.5H9"/><path d="M15 3.5h3.5a2 2 0 0 1 2 2V9"/>
+    <path d="M20.5 15v3.5a2 2 0 0 1-2 2H15"/><path d="M9 20.5H5.5a2 2 0 0 1-2-2V15"/>
+  </symbol>
+  <symbol id="ic-chevron-left" viewBox="0 0 24 24"><path d="M14.5 5.5L8 12l6.5 6.5"/></symbol>
+  <symbol id="ic-chevron-right" viewBox="0 0 24 24"><path d="M9.5 5.5L16 12l-6.5 6.5"/></symbol>
+  <symbol id="ic-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
   <symbol id="ic-sliders" viewBox="0 0 24 24">
     <path d="M3.5 7h5M12.5 7h8M3.5 17h8M15.5 17h5"/>
     <circle cx="10.5" cy="7" r="2.2"/><circle cx="13.5" cy="17" r="2.2"/>
@@ -1532,6 +1719,7 @@
   </nav>
 
   <div class="account-area">
+    <button class="icon-btn" id="focus-btn" title="Fokus — nur der Stundenplan (Taste F)" aria-label="Fokus" onclick="openFocus()"><svg class="ic"><use href="#ic-focus"/></svg></button>
     <button class="icon-btn" id="settings-btn" title="Einstellungen" aria-label="Einstellungen" onclick="openSettings()"><svg class="ic"><use href="#ic-sliders"/></svg></button>
     <button class="account-btn" id="account-btn" onclick="openAuth('login')">Anmelden</button>
     <button class="account-chip" id="account-chip" style="display:none" onclick="toggleAccountMenu(event)">
@@ -1655,6 +1843,11 @@
     <div class="card">
       <h2 id="ov-today-title"><svg class="ic"><use href="#ic-calendar"/></svg> Dein Tag</h2>
       <div id="ov-today" class="today-list"></div>
+      <div class="tt-actions">
+        <button class="ghost" onclick="openFocus()" style="color:var(--accent)">
+          <svg class="ic"><use href="#ic-focus"/></svg> Im Fokus öffnen
+        </button>
+      </div>
     </div>
     <div class="card">
       <h2><svg class="ic"><use href="#ic-clock"/></svg> Jetzt dran <small>heute &amp; morgen fällig</small></h2>
@@ -1961,6 +2154,26 @@
         <button class="ghost danger-btn" id="set-delete-acc" onclick="deleteCurrentAccount()">Konto löschen</button>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- Fokus: nur der Stundenplan, sonst nichts -->
+<div class="focus-overlay" id="focus-overlay" style="display:none" role="dialog" aria-label="Fokus">
+  <button class="focus-close" onclick="closeFocus()" title="Schließen (Esc)" aria-label="Fokus verlassen">
+    <svg class="ic"><use href="#ic-close"/></svg>
+  </button>
+  <div class="focus-inner">
+    <div class="focus-head">
+      <button class="focus-nav" onclick="focusDay(-1)" aria-label="Tag zurück"><svg class="ic"><use href="#ic-chevron-left"/></svg></button>
+      <div class="focus-title">
+        <div class="focus-weekday" id="focus-weekday"></div>
+        <div class="focus-date" id="focus-date"></div>
+      </div>
+      <button class="focus-nav" onclick="focusDay(1)" aria-label="Tag vor"><svg class="ic"><use href="#ic-chevron-right"/></svg></button>
+    </div>
+    <div id="focus-now"></div>
+    <div class="focus-list" id="focus-list"></div>
+    <div class="focus-hint" id="focus-hint"></div>
   </div>
 </div>
 
@@ -4074,6 +4287,264 @@ function renderAbsences() {
         „nicht entschuldigt“ heißt: in WebUntis liegt noch keine Entschuldigung vor.</div>
     </div>`;
 }
+
+/* ---------- Fokus: nur der Stundenplan ---------- */
+/* Eine Vollbild-Ansicht für den Schultag selbst: was gerade läuft, wie lange
+   noch, und was danach kommt. Sonst nichts. */
+
+let focusDateStr = null;     // welcher Tag gerade gezeigt wird
+let focusTimer = null;       // Sekundentakt, nur solange offen
+let focusWakeLock = null;    // hält den Bildschirm an, wenn der Browser es erlaubt
+let focusNowKey = null;      // erkennt, wann sich die laufende Stunde ändert
+
+function hmToMin(hm) {
+  const m = /^(\d{1,2}):(\d{2})$/.exec(String(hm || ""));
+  return m ? parseInt(m[1], 10) * 60 + parseInt(m[2], 10) : null;
+}
+function nowMin() { const d = new Date(); return d.getHours() * 60 + d.getMinutes(); }
+function shiftDate(ds, days) {
+  const d = new Date(ds + "T00:00:00");
+  d.setDate(d.getDate() + days);
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+}
+function minLabel(n) {
+  if (n <= 0) return "gleich";
+  if (n < 60) return n + " Min";
+  const h = Math.floor(n / 60), r = n % 60;
+  return r ? `${h} Std ${r} Min` : `${h} Std`;
+}
+function focusIsOpen() {
+  const el = document.getElementById("focus-overlay");
+  return !!el && el.style.display !== "none";
+}
+
+function openFocus() {
+  const el = document.getElementById("focus-overlay");
+  if (!el) return;
+  focusDateStr = todayStr();
+  if (weekdayIdx(focusDateStr) === -1) focusDateStr = nextSchoolDay(focusDateStr, 1);
+  focusNowKey = null;
+  el.classList.remove("closing");
+  el.style.display = "block";
+  document.body.style.overflow = "hidden";
+  renderFocus();
+  clearInterval(focusTimer);
+  focusTimer = setInterval(tickFocus, 1000);
+  focusWakeLockOn();
+}
+
+function closeFocus() {
+  const el = document.getElementById("focus-overlay");
+  if (!el || el.style.display === "none") return;
+  clearInterval(focusTimer); focusTimer = null;
+  focusWakeLockOff();
+  document.body.style.overflow = "";
+  if (reducedMotion()) { el.style.display = "none"; return; }
+  el.classList.add("closing");
+  setTimeout(() => {
+    if (!el.classList.contains("closing")) return;
+    el.style.display = "none";
+    el.classList.remove("closing");
+  }, 210);
+}
+
+/* Wochenenden überspringen — der Planer kennt nur Montag bis Freitag. */
+function nextSchoolDay(ds, dir) {
+  let d = ds;
+  for (let i = 0; i < 7; i++) {
+    d = shiftDate(d, dir);
+    if (weekdayIdx(d) !== -1) return d;
+  }
+  return ds;
+}
+function focusDay(delta) {
+  focusDateStr = nextSchoolDay(focusDateStr, delta > 0 ? 1 : -1);
+  focusNowKey = null;
+  renderFocus();
+}
+
+/* Der Bildschirm soll nicht mitten in der Stunde dunkel werden. */
+async function focusWakeLockOn() {
+  try {
+    if (navigator.wakeLock && !focusWakeLock) {
+      focusWakeLock = await navigator.wakeLock.request("screen");
+      focusWakeLock.addEventListener("release", () => { focusWakeLock = null; });
+    }
+  } catch (e) { /* nicht überall erlaubt — dann eben nicht */ }
+}
+function focusWakeLockOff() {
+  try { if (focusWakeLock) { focusWakeLock.release(); focusWakeLock = null; } } catch (e) {}
+}
+
+function focusHero(lessons, isToday) {
+  const live = lessons.filter(l => l.status !== "cancelled" && l.start && l.end);
+  const n = nowMin();
+
+  if (!lessons.length) {
+    return { key: "leer", cls: "free", label: "Frei", subject: "Kein Unterricht",
+             meta: "Für diesen Tag ist nichts eingetragen.", rest: "", pct: null };
+  }
+  if (!isToday || !live.length) {
+    const first = live[0] || lessons[0];
+    const last = live[live.length - 1] || lessons[lessons.length - 1];
+    return {
+      key: "tag", cls: "", label: "Überblick",
+      subject: lessons.length + (lessons.length === 1 ? " Stunde" : " Stunden"),
+      meta: first.start ? `${first.start} bis ${last.end} · beginnt mit ${lessonLabel(first)}` : "",
+      rest: "", pct: null,
+    };
+  }
+
+  const cur = live.find(l => hmToMin(l.start) <= n && n < hmToMin(l.end));
+  if (cur) {
+    const from = hmToMin(cur.start), to = hmToMin(cur.end);
+    return {
+      key: "now" + cur.period, cls: "", label: "Jetzt",
+      subject: lessonLabel(cur),
+      meta: [cur.room && "Raum " + cur.room, cur.teacher, `${cur.start}–${cur.end}`].filter(Boolean).join(" · "),
+      rest: "Noch " + minLabel(to - n),
+      pct: Math.max(0, Math.min(100, ((n - from) / Math.max(1, to - from)) * 100)),
+    };
+  }
+
+  const next = live.find(l => hmToMin(l.start) > n);
+  if (next) {
+    const prev = live.filter(l => hmToMin(l.end) <= n).pop();
+    const from = prev ? hmToMin(prev.end) : null;
+    const to = hmToMin(next.start);
+    return {
+      key: "next" + next.period, cls: prev ? "free" : "", label: prev ? "Pause" : "Gleich",
+      subject: lessonLabel(next),
+      meta: [`ab ${next.start}`, next.room && "Raum " + next.room, next.teacher].filter(Boolean).join(" · "),
+      rest: "Beginnt in " + minLabel(to - n),
+      pct: from != null ? Math.max(0, Math.min(100, ((n - from) / Math.max(1, to - from)) * 100)) : null,
+    };
+  }
+
+  const tomorrow = lessonsOfDay(nextSchoolDay(focusDateStr, 1)).filter(l => l.status !== "cancelled");
+  return {
+    key: "ende", cls: "free", label: "Fertig", subject: "Unterricht vorbei",
+    meta: tomorrow.length
+      ? `Weiter ${tomorrow[0].start ? "um " + tomorrow[0].start + " " : ""}mit ${lessonLabel(tomorrow[0])}.`
+      : "Am nächsten Schultag ist nichts eingetragen.",
+    rest: "", pct: null,
+  };
+}
+
+function focusHeroHtml(h) {
+  return `
+    <div class="fnow ${h.cls}" style="--i:0">
+      <div class="fnow-label">${esc(h.label)}</div>
+      <div class="fnow-subject">${esc(h.subject)}</div>
+      ${h.meta ? `<div class="fnow-meta">${esc(h.meta)}</div>` : ""}
+      ${h.rest ? `<div class="fnow-rest">${esc(h.rest)}</div>` : ""}
+      ${h.pct != null ? `<div class="fnow-bar"><span style="width:${h.pct.toFixed(1)}%"></span></div>` : ""}
+    </div>`;
+}
+
+function renderFocus() {
+  const hint = document.getElementById("focus-hint");
+  if (hint) {
+    hint.textContent = matchMedia("(pointer: coarse)").matches
+      ? "Seitwärts wischen für andere Tage · nach unten wischen schließt"
+      : "← → für andere Tage · Esc schließt";
+  }
+  const wd = document.getElementById("focus-weekday");
+  const dt = document.getElementById("focus-date");
+  const nowEl = document.getElementById("focus-now");
+  const list = document.getElementById("focus-list");
+  if (!wd || !nowEl || !list) return;
+
+  const ds = focusDateStr;
+  const isToday = ds === todayStr();
+  const d = new Date(ds + "T00:00:00");
+  wd.textContent = isToday ? "Heute" : d.toLocaleDateString(LOCALE, { weekday: "long" });
+  dt.textContent = d.toLocaleDateString(LOCALE, { day: "numeric", month: "long", year: "numeric" });
+
+  const lessons = lessonsOfDay(ds);
+  const hero = focusHero(lessons, isToday);
+  focusNowKey = hero.key;
+  nowEl.innerHTML = focusHeroHtml(hero);
+
+  if (!lessons.length) {
+    list.innerHTML = `<div class="focus-empty" style="--i:1">Synchronisiere im Reiter „Stundenplan“ mit WebUntis — oder trag deinen Plan dort von Hand ein.</div>`;
+    return;
+  }
+
+  const n = nowMin();
+  list.innerHTML = lessons.map((l, i) => {
+    const from = hmToMin(l.start), to = hmToMin(l.end);
+    const isNow = isToday && from != null && to != null && from <= n && n < to && l.status !== "cancelled";
+    const past = isToday && to != null && to <= n;
+    const cls = [
+      l.status === "cancelled" ? "cancelled" : l.status === "substitution" ? "substitution" : "",
+      isNow ? "now" : past ? "past" : "",
+    ].filter(Boolean).join(" ");
+    const flag = l.status === "substitution" ? `<span class="frow-flag">Vertretung</span>` : "";
+    const room = [l.room && "Raum " + l.room, l.teacher].filter(Boolean).join(" · ");
+    return `
+      <div class="frow ${cls}" style="--i:${i + 1}">
+        <div class="frow-time">${esc(l.start || l.period + ".")}</div>
+        <div class="frow-name">${esc(lessonLabel(l))}${flag}</div>
+        <div class="frow-room">${esc(room)}</div>
+      </div>`;
+  }).join("");
+}
+
+/* Im Sekundentakt: nur die Restzeit und den Balken auffrischen. Wechselt die
+   laufende Stunde, wird einmal komplett neu gezeichnet. */
+function tickFocus() {
+  if (!focusIsOpen()) { clearInterval(focusTimer); focusTimer = null; return; }
+  const ds = focusDateStr;
+  const isToday = ds === todayStr();
+  const hero = focusHero(lessonsOfDay(ds), isToday);
+  if (hero.key !== focusNowKey) { renderFocus(); return; }
+  const box = document.getElementById("focus-now");
+  if (!box) return;
+  const rest = box.querySelector(".fnow-rest");
+  if (rest && hero.rest) rest.textContent = hero.rest;
+  const bar = box.querySelector(".fnow-bar span");
+  if (bar && hero.pct != null) bar.style.width = hero.pct.toFixed(1) + "%";
+}
+
+/* Tastatur: F öffnet, Esc schließt, Pfeile wechseln den Tag. */
+document.addEventListener("keydown", (e) => {
+  const open = focusIsOpen();
+  const tag = (document.activeElement && document.activeElement.tagName) || "";
+  const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(tag);
+  if (e.key === "Escape" && open) { closeFocus(); return; }
+  if (!open && !typing && (e.key === "f" || e.key === "F") && !e.metaKey && !e.ctrlKey && !e.altKey) {
+    e.preventDefault(); openFocus(); return;
+  }
+  if (!open) return;
+  if (e.key === "ArrowLeft") { e.preventDefault(); focusDay(-1); }
+  if (e.key === "ArrowRight") { e.preventDefault(); focusDay(1); }
+});
+
+/* Wischen: seitlich wechselt den Tag, nach unten schließt. */
+(function () {
+  const el = document.getElementById("focus-overlay");
+  if (!el) return;
+  let x0 = 0, y0 = 0, t0 = 0;
+  el.addEventListener("touchstart", (e) => {
+    const t = e.changedTouches[0];
+    x0 = t.clientX; y0 = t.clientY; t0 = Date.now();
+  }, { passive: true });
+  el.addEventListener("touchend", (e) => {
+    const t = e.changedTouches[0];
+    const dx = t.clientX - x0, dy = t.clientY - y0;
+    if (Date.now() - t0 > 700) return;
+    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.6) focusDay(dx < 0 ? 1 : -1);
+    else if (dy > 90 && Math.abs(dy) > Math.abs(dx) * 1.6 && el.scrollTop <= 0) closeFocus();
+  }, { passive: true });
+})();
+
+/* Nach dem Zurückkommen: Bildschirmsperre neu anfordern und auffrischen. */
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState !== "visible" || !focusIsOpen()) return;
+  focusWakeLockOn();
+  renderFocus();
+});
 
 /* ---------- Kalender ---------- */
 let calRef = new Date();
