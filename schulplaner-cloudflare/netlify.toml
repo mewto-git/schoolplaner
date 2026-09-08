@@ -1,0 +1,11 @@
+# Konfiguration für Netlify.
+#
+# publish = "."      → die Website liegt im selben Ordner
+# functions directory → hier findet Netlify die WebUntis-Sync
+#
+# Für Cloudflare ist diese Datei bedeutungslos, sie stört dort also nicht.
+[build]
+  publish = "."
+
+[functions]
+  directory = "netlify/functions"

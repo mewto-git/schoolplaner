@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 """
-Erzeugt _worker.js aus functions/api/untis/[[path]].js.
+Erzeugt aus functions/api/untis/[[path]].js die beiden Fassungen für die
+anderen Hosts:
+
+  _worker.js                    → Cloudflare (Pages "Advanced mode" und
+                                  Workers mit wrangler.jsonc)
+  netlify/functions/untis.mjs   → Netlify
 
 Warum beides?
   * functions/…  ist der normale Weg. Cloudflare baut den Ordner, wenn das
@@ -19,6 +24,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 SRC = os.path.join(ROOT, "functions", "api", "untis", "[[path]].js")
 OUT = os.path.join(ROOT, "_worker.js")
+OUT_NETLIFY = os.path.join(ROOT, "netlify", "functions", "untis.mjs")
 
 src = io.open(SRC, encoding="utf-8").read()
 
@@ -53,9 +59,35 @@ export default {
 };
 '''
 
+netlify = '''
+
+/* ------------------------------------------------------------------ *
+ *  Netlify Functions (v2). Arbeitet wie Cloudflare mit Request und
+ *  Response; die Pfade stehen unten in `config`, eine Umleitungsregel
+ *  braucht es dadurch nicht.
+ * ------------------------------------------------------------------ */
+export default async (request) => {
+  const ctx = { request };
+  if (request.method === "POST") return onRequestPost(ctx);
+  if (request.method === "GET") return onRequestGet(ctx);
+  return new Response(
+    JSON.stringify({ ok: false, error: "Diesen Endpunkt gibt es nur per POST." }),
+    { status: 405, headers: { "content-type": "application/json; charset=utf-8", "allow": "POST, GET" } }
+  );
+};
+
+export const config = {
+  path: ["/api/untis/health", "/api/untis/schools", "/api/untis/sync"],
+};
+'''
+
 header = ("/* AUTOMATISCH ERZEUGT aus functions/api/untis/[[path]].js — "
           "nicht von Hand bearbeiten.\n"
           "   Neu erzeugen mit:  python3 tools/build-worker.py           */\n")
 
 io.open(OUT, "w", encoding="utf-8").write(header + src + router)
 print("geschrieben:", os.path.relpath(OUT, ROOT), "(%d Bytes)" % os.path.getsize(OUT))
+
+os.makedirs(os.path.dirname(OUT_NETLIFY), exist_ok=True)
+io.open(OUT_NETLIFY, "w", encoding="utf-8").write(header + src + netlify)
+print("geschrieben:", os.path.relpath(OUT_NETLIFY, ROOT), "(%d Bytes)" % os.path.getsize(OUT_NETLIFY))

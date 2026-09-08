@@ -31,11 +31,17 @@ functions/api/untis/[[path]].js    ← dieselbe Sync für Git/Wrangler-Deploys
 tools/build-worker.py              ← erzeugt _worker.js aus der Function
 wrangler.jsonc                     ← Konfiguration für `npx wrangler deploy`
 .assetsignore                      ← hält Code aus den Website-Dateien heraus
+netlify/functions/untis.mjs        ← dieselbe Sync für Netlify
+netlify.toml                       ← Netlify-Konfiguration
 ```
 
-## Warum es die Sync zweimal gibt
+Die Dateien der einzelnen Anbieter stören sich nicht: Cloudflare ignoriert
+`netlify.toml`, Netlify ignoriert `_worker.js`. Ein Paket, drei Anbieter.
 
-Cloudflare kennt zwei Wege, eigenen Code auf einer Pages-Seite auszuführen:
+## Warum es die Sync mehrfach gibt
+
+Derselbe Code liegt in mehreren Fassungen bei, weil jeder Anbieter ihn
+woanders sucht. Bei Cloudflare gibt es dafür sogar zwei Wege:
 
 | Datei | wird gebaut bei | Datei-Upload im Dashboard |
 |---|---|---|
@@ -48,8 +54,10 @@ das Symptom, wenn die Schulsuche nichts findet. Deshalb liegt dieselbe Sync
 zusätzlich als `_worker.js` bei, und die versteht auch der reine Upload.
 
 `_worker.js` hat Vorrang: ist die Datei da, ignoriert Cloudflare `functions/`.
-Beide werden aus **einer** Quelle erzeugt, damit sie nicht auseinanderlaufen —
-nach jeder Änderung an der Function einmal:
+Für Netlify liegt dieselbe Sync als `netlify/functions/untis.mjs` bei.
+
+Alle Fassungen werden aus **einer** Quelle erzeugt, damit sie nicht
+auseinanderlaufen — nach jeder Änderung an der Function einmal:
 
 ```
 python3 tools/build-worker.py
@@ -130,7 +138,22 @@ den ausgelieferten Dateien heraus. Der Projektname (`schulplaner`) steht in
 npx wrangler pages deploy . --project-name schulplaner
 ```
 
-## Variante D — über GitHub (Updates deployen sich automatisch)
+## Variante D — Netlify (ziehen und ablegen, ohne Konsole)
+
+Netlify hat keinen Produkt-Fallstrick wie Cloudflare: es gibt nur eine Art
+Projekt, und Funktionen laufen dort auch beim Hochladen von Hand.
+
+1. Das ZIP entpacken.
+2. https://app.netlify.com/drop öffnen.
+3. Den **entpackten Ordner** ins Fenster ziehen (den Ordner, nicht das ZIP).
+4. Nach ein paar Sekunden steht die Seite unter einer Adresse auf
+   `…netlify.app`. Ein Konto braucht es erst, wenn du die Seite behalten
+   willst — dann oben auf „Claim site".
+
+Netlify liest `netlify.toml` und findet darüber `netlify/functions/untis.mjs`.
+Die Pfade stehen in der Function selbst, eine Umleitungsregel ist nicht nötig.
+
+## Variante E — über GitHub (Updates deployen sich automatisch)
 
 1. Ordnerinhalt in ein GitHub-Repo laden.
 2. Cloudflare → **Workers & Pages** → **Create** → Reiter **Pages** →
