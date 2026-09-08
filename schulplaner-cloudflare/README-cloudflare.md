@@ -90,14 +90,38 @@ Findest du den Reiter „Pages" nicht, nimm Variante B — die legt ebenfalls
 eine Pages-Seite an.
 
 ### Variante B — Konsole (legt auch eine Pages-Seite an)
-Braucht Node auf deinem Rechner. Im entpackten Ordner:
+
+**Wo ist die Konsole?**
+
+* **Windows:** Windows-Taste drücken, `powershell` tippen, Enter.
+  Schneller: im Explorer den entpackten Ordner öffnen, oben in die
+  Adressleiste klicken, `powershell` tippen und Enter — die Konsole startet
+  dann schon im richtigen Ordner.
+* **Mac:** ⌘ + Leertaste, `terminal` tippen, Enter.
+
+**In den Ordner wechseln** (falls nicht schon dort): `cd ` tippen, dann ein
+Leerzeichen, dann den entpackten Ordner mit der Maus ins Konsolenfenster
+ziehen — der Pfad wird automatisch eingesetzt. Enter.
+
+**Node vorhanden?** Prüfen mit:
+
+```
+node -v
+```
+
+Kommt eine Versionsnummer wie `v22.11.0`, passt es. Kommt „nicht gefunden",
+zuerst Node von https://nodejs.org installieren (die **LTS**-Fassung), danach
+die Konsole schließen und neu öffnen.
+
+**Deployen:**
 
 ```
 npx wrangler pages deploy . --project-name schulplaner
 ```
 
-Beim ersten Mal öffnet sich ein Anmeldefenster im Browser. Danach steht die
-Seite unter `https://schulplaner.pages.dev`.
+Beim ersten Mal fragt npx, ob es `wrangler` installieren darf — mit `y` und
+Enter bestätigen. Danach öffnet sich ein Anmeldefenster im Browser. Am Ende
+steht die Adresse in der Konsole, sie endet auf `pages.dev`.
 
 ### Variante C — über GitHub (Updates deployen sich automatisch)
 1. Ordnerinhalt in ein GitHub-Repo laden.
