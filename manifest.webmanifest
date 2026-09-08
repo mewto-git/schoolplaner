@@ -1,0 +1,30 @@
+{
+  "id": "/",
+  "name": "Schulplaner",
+  "short_name": "Schulplaner",
+  "description": "Stundenplan, Hausübungen, Prüfungen und Noten — mit WebUntis-Synchronisierung.",
+  "lang": "de",
+  "dir": "ltr",
+  "start_url": "./?src=homescreen",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui", "browser"],
+  "orientation": "any",
+  "background_color": "#F2F2F7",
+  "theme_color": "#F2F2F7",
+  "categories": ["education", "productivity"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/icon-1024.png", "sizes": "1024x1024", "type": "image/png", "purpose": "any" }
+  ],
+  "shortcuts": [
+    { "name": "Heute", "short_name": "Heute", "url": "./?tab=overview",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Hausaufgaben", "short_name": "Aufgaben", "url": "./?tab=homework",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Stundenplan", "short_name": "Plan", "url": "./?tab=timetable",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

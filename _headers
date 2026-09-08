@@ -1,0 +1,15 @@
+# Der Service Worker darf nie „alt" ausgeliefert werden, sonst bekommt das
+# iPhone nach einem Deploy tagelang die alte App.
+/sw.js
+  Cache-Control: no-cache
+/index.html
+  Cache-Control: no-cache
+/manifest.webmanifest
+  Cache-Control: public, max-age=3600
+/icons/*
+  Cache-Control: public, max-age=604800
+
+# WebUntis-Sync darf niemals irgendwo zwischengespeichert werden.
+/api/*
+  Cache-Control: no-store
+  X-Robots-Tag: noindex

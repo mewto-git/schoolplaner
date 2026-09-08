@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Datenschutzhinweis · Schulplaner</title>
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icons/icon-192.png" sizes="192x192" type="image/png">
+<meta name="theme-color" content="#F2F2F7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #F2F2F7;
+    --surface: #FFFFFF;
+    --border: rgba(60, 60, 67, 0.16);
+    --text: #000000;
+    --muted: rgba(60, 60, 67, 0.60);
+    --accent: #007AFF;
+    --accent-soft: rgba(0, 122, 255, 0.10);
+    --shadow: 0 1px 2px rgba(0,0,0,0.04), 0 4px 14px rgba(0,0,0,0.05);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #000000;
+      --surface: #1C1C1E;
+      --border: rgba(84, 84, 88, 0.50);
+      --text: #FFFFFF;
+      --muted: rgba(235, 235, 245, 0.60);
+      --accent: #0A84FF;
+      --accent-soft: rgba(10, 132, 255, 0.16);
+      --shadow: none;
+    }
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI",
+                 Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.55;
+    letter-spacing: -0.01em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    padding: calc(28px + env(safe-area-inset-top)) 18px calc(50px + env(safe-area-inset-bottom));
+  }
+  main {
+    max-width: 720px; margin: 0 auto;
+    background: var(--surface);
+    border-radius: 18px;
+    padding: 30px 28px;
+    box-shadow: var(--shadow);
+  }
+  h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.03em; margin-bottom: 6px; }
+  h1 span { color: var(--accent); }
+  .updated { color: var(--muted); font-size: 13.5px; margin-bottom: 22px; }
+  h2 { font-size: 17px; font-weight: 600; letter-spacing: -0.02em; margin: 26px 0 8px; }
+  p, li { color: var(--text); font-size: 15px; margin-bottom: 8px; }
+  ul { padding-left: 22px; margin-bottom: 8px; }
+  strong { font-weight: 600; }
+  .muted { color: var(--muted); }
+  .callout {
+    background: var(--accent-soft);
+    border-left: 3px solid var(--accent);
+    border-radius: 12px; padding: 14px 16px; margin: 14px 0; font-size: 14.5px;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .back {
+    display: inline-block; margin-top: 26px; font-size: 15px; font-weight: 500;
+  }
+  footer { max-width: 720px; margin: 18px auto 0; color: var(--muted); font-size: 12.5px; text-align: center; }
+  @media (max-width: 560px) {
+    body { padding-left: 14px; padding-right: 14px; }
+    main { padding: 22px 18px; border-radius: 16px; }
+    h1 { font-size: 23px; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>Schul<span>planer</span> — Datenschutzhinweis</h1>
+  <p class="updated">Stand: 24. Juli 2026</p>
+
+  <p>Der Schulplaner ist ein privates, nicht-kommerzielles Schülerprojekt von
+  <strong>Moritz Burgstaller</strong>. Er ist <strong>nicht</strong> mit der Untis GmbH,
+  WebUntis oder deiner Schule verbunden oder von ihnen unterstützt.</p>
+
+  <div class="callout">
+    🔒 <strong>Das Wichtigste zuerst:</strong> Dein WebUntis-Passwort wird zum
+    Synchronisieren nur <strong>einmalig</strong> verwendet und danach
+    <strong>sofort verworfen</strong> — es wird niemals gespeichert, protokolliert
+    oder weitergegeben.
+  </div>
+
+  <h2>1. Was auf deinem Gerät gespeichert wird</h2>
+  <p>Deine Planer-Daten — Stundenplan, Hausaufgaben, Prüfungen, Noten, Notizen,
+  Fächer und (falls gesetzt) dein Profilbild — werden ausschließlich
+  <strong>lokal in deinem Browser</strong> gespeichert (localStorage).
+  Sie liegen nicht auf einem Server. Wenn du die Browserdaten löschst oder ein
+  anderes Gerät benutzt, sind diese Daten dort nicht vorhanden.</p>
+
+  <h2>2. WebUntis-Synchronisierung</h2>
+  <p>Die Synchronisierung ist <strong>freiwillig</strong>. Ohne sie funktioniert
+  der Planer vollständig; du kannst alles auch von Hand eintragen.</p>
+  <p class="muted">Die <strong>Schulsuche</strong> schickt nur deinen Suchbegriff
+  (z. B. „Petrinum Linz“) an das öffentliche Schulverzeichnis von WebUntis —
+  ohne Zugangsdaten und ohne Bezug zu dir. Wenn du stattdessen den Link deiner
+  WebUntis-Seite einfügst, wird er direkt im Browser ausgewertet; dabei verlässt
+  gar nichts dein Gerät.</p>
+  <p>Sie nutzt eine <strong>inoffizielle</strong> WebUntis-Schnittstelle und ist nicht
+  von Untis freigegeben. Du meldest dich mit deinem <strong>eigenen WebUntis-Konto</strong>
+  an und entscheidest selbst und auf eigene Verantwortung, ob du sie verwendest.</p>
+  <p>Wenn du synchronisierst, gibst du folgende Angaben ein: WebUntis-Server,
+  Schulname, Benutzername und Passwort. Diese werden über eine verschlüsselte
+  Verbindung (HTTPS) an den Sync-Server gesendet. Der Server:</p>
+  <ul>
+    <li>meldet sich damit einmalig bei WebUntis an,</li>
+    <li>ruft deinen Stundenplan (inklusive Entfall und Vertretungen), deine
+      Prüfungen, Hausaufgaben und Fehlzeiten ab,</li>
+    <li>gibt diese an deinen Browser zurück und</li>
+    <li><strong>verwirft deine Zugangsdaten sofort danach.</strong></li>
+  </ul>
+  <p>Dein Passwort wird <strong>nicht gespeichert, nicht protokolliert und nicht
+  an Dritte weitergegeben.</strong> Die abgerufenen Daten werden nur in deinem
+  Browser gespeichert, nicht auf dem Server.</p>
+  <p class="muted">Zu den abgerufenen Daten gehören auch deine <strong>Fehlzeiten</strong>
+  (Datum, Uhrzeit, Fach, Grund und ob eine Entschuldigung vorliegt). Sie stammen
+  aus deinem eigenen WebUntis-Konto, werden nur zur Anzeige in deinem Browser
+  gespeichert und bei jeder Synchronisierung ersetzt. Gibt deine Schule sie nicht
+  heraus, bleibt der Bereich einfach leer.</p>
+  <p class="muted">Optional kannst du in der App wählen, dein WebUntis-Passwort
+  <em>auf deinem eigenen Gerät</em> zu speichern, damit du es nicht neu eingeben
+  musst. Das passiert dann nur lokal in deinem Browser — nicht auf dem Server.</p>
+
+  <h2>3. Keine Konten, keine Werbung, kein Tracking</h2>
+  <p>Es gibt auf dem Server keine Benutzerkonten, keine Werbung, keine Cookies zu
+  Werbezwecken und keine Analyse- oder Tracking-Dienste.</p>
+
+  <h2>4. App am Home-Bildschirm &amp; Offline-Betrieb</h2>
+  <p>Du kannst den Schulplaner am iPhone über <em>Teilen → Zum Home-Bildschirm</em>
+  ablegen. Dann speichert der Browser die Programmdateien (HTML, Symbole) über einen
+  sogenannten Service Worker lokal zwischen, damit die App auch ohne Internet startet.</p>
+  <ul>
+    <li>Zwischengespeichert werden <strong>nur die Programmdateien</strong> — keine
+      Zugangsdaten und keine Stundenplan-Antworten. Der Pfad der Synchronisierung
+      (<code>/api/…</code>) ist vom Zwischenspeicher ausdrücklich ausgenommen.</li>
+    <li>Erinnerungen erscheinen nur, solange du die App geöffnet hast bzw. beim
+      Öffnen. Es gibt <strong>keinen Push-Dienst</strong> und keinen Server, der
+      im Hintergrund etwas über dich weiß.</li>
+  </ul>
+
+  <h2>5. Deine Kontrolle</h2>
+  <p>Du kannst die Nutzung jederzeit beenden. Über „Backup exportieren“ sicherst
+  du deine Daten; durch Leeren der Browserdaten oder „Konto löschen“ entfernst du
+  sie von deinem Gerät.</p>
+
+  <h2>6. Minderjährige</h2>
+  <p>Diese App richtet sich an Mitschülerinnen und Mitschüler. Wenn du
+  minderjährig bist, sprich im Zweifel mit einem Elternteil oder einer Lehrkraft,
+  bevor du deine WebUntis-Zugangsdaten eingibst.</p>
+
+  <h2>7. Kontakt</h2>
+  <p>Fragen zum Datenschutz? Schreib an: <strong>m29burgstaller@petrinum.at</strong></p>
+
+  <a class="back" href="index.html">← Zurück zum Schulplaner</a>
+</main>
+<footer>„WebUntis“ und „Untis“ sind Marken der Untis GmbH. Dieses Projekt steht in keiner Verbindung zu Untis.</footer>
+</body>
+</html>
