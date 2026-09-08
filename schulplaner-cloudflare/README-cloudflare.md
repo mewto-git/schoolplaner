@@ -24,19 +24,52 @@ privacy.html                       ← Datenschutzhinweis
 manifest.webmanifest               ← macht die Seite installierbar
 sw.js                              ← Service Worker (Offline-Start)
 _headers                           ← Cache-Regeln (sw.js nie zwischenspeichern)
+_worker.js                         ← die WebUntis-Sync für den Datei-Upload
 apple-touch-icon.png               ← Symbol für „Zum Home-Bildschirm"
 icons/                             ← App-Symbole 120–1024 px (+ Quelle als HTML)
-functions/api/untis/[[path]].js    ← die WebUntis-Sync (läuft bei Cloudflare)
+functions/api/untis/[[path]].js    ← dieselbe Sync für Git/Wrangler-Deploys
+tools/build-worker.py              ← erzeugt _worker.js aus der Function
 ```
-> Wichtig: `functions/` MUSS mit hochgeladen werden — daraus macht Cloudflare
-> automatisch die Endpunkte `/api/untis/sync` und `/api/untis/schools`.
-> Fehlt der Ordner, meldet die Schulsuche „HTTP 404" statt Ergebnissen.
+
+## Warum es die Sync zweimal gibt
+
+Cloudflare kennt zwei Wege, eigenen Code auf einer Pages-Seite auszuführen:
+
+| Datei | wird gebaut bei | Datei-Upload im Dashboard |
+|---|---|---|
+| `functions/…` | Git-Anbindung, `wrangler pages deploy` | **nein** — der Ordner bleibt eine statische Datei |
+| `_worker.js` | allen Wegen („Advanced mode") | **ja** |
+
+Beim Drag-and-Drop-Upload im Dashboard wird `functions/` nicht kompiliert.
+Die Seite lädt dann normal, aber `/api/untis/…` antwortet mit **404** — genau
+das Symptom, wenn die Schulsuche nichts findet. Deshalb liegt dieselbe Sync
+zusätzlich als `_worker.js` bei, und die versteht auch der reine Upload.
+
+`_worker.js` hat Vorrang: ist die Datei da, ignoriert Cloudflare `functions/`.
+Beide werden aus **einer** Quelle erzeugt, damit sie nicht auseinanderlaufen —
+nach jeder Änderung an der Function einmal:
+
+```
+python3 tools/build-worker.py
+```
 
 **Selbsttest nach dem Deploy:** `https://…pages.dev/api/untis/health` im Browser
-öffnen. Kommt dort JSON (`{"ok":true,…}`), laufen die Functions. Kommt die
-404-Seite, wurde `functions/` nicht mit deployt — dann das **ganze ZIP** hochladen,
-nicht einzelne Dateien, und darauf achten, dass `index.html` und `functions/`
-direkt an der Wurzel des Uploads liegen (nicht in einem Unterordner).
+öffnen. Kommt dort JSON (`{"ok":true,…}`), läuft die Sync. Kommt die 404-Seite,
+lief kein Code — dann prüfen, ob `_worker.js` wirklich **an der Wurzel** des
+Uploads liegt (nicht in einem Unterordner) und ob das **ganze ZIP** hochgeladen
+wurde, nicht einzelne Dateien.
+
+### Variante C — mit Wrangler (funktioniert sicher)
+Klappt der Dashboard-Upload nicht, geht dieser Weg immer. Er braucht Node
+auf deinem Rechner:
+
+```
+cd schulplaner-cloudflare
+npx wrangler pages deploy . --project-name schulplaner
+```
+
+Beim ersten Mal öffnet sich ein Browserfenster zum Anmelden. Wrangler lädt
+alles hoch und baut dabei sowohl `_worker.js` als auch `functions/` mit.
 
 ## In wenigen Schritten live
 ### Variante A — direkt hochladen (am schnellsten)
